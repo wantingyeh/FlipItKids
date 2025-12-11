@@ -8,7 +8,7 @@ Flip It! Kids is a "Real Life Simulator" web application designed for lower prim
 - 60 Scenarios: Covers 3 difficulty levels across categories like Social, Family, Emotion, and Safety.
 - Gamified Experience: Includes card drawing mechanics, leveling up, and badge collection.
 - Privacy First: Uses Local Storage. All data (journals, mood tracking) stays on the user's device. No database, no tracking.
-- Bilingual: *FlipItKids_BrainyMama_TW.html* (Traditional Chinese), *FlipItKids_BrainyMama_Eng.html* (English)
+- Bilingual: *FlipItKids_BrainyMama_TW.html* (Traditional Chinese), *FlipItKids_BrainyMama_Eng.html* (English; AI-translated version)
 - Single File App: The entire application runs from a single HTML file containing all CSS and JavaScript. No installation required.
 
 ## 🚀 How to Use
