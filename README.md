@@ -16,7 +16,7 @@ Flip It! Kids is a "Real Life Simulator" web application designed for lower prim
 **Option 1: Play Online (GitHub Pages)**
 
 - Traditional Chinese: https://wantingyeh.github.io/FlipItKids/FlipItKids_BrainyMama_TW.html
-- English:
+- English: https://wantingyeh.github.io/FlipItKids/FlipItKids_BrainyMama_Eng.html
 
 **Option 2: Run Locally**
 
