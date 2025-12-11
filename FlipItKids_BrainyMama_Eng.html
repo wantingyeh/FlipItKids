@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flip It! Kids - Resilience Training</title>
+    <style>
+        :root {
+            --card-width: 340px;
+            --card-height: 680px;
+            --level-color: #ffcb05; /* Default Level 1 Color */
+            --primary-blue: #2a75bb;
+            --bg-color: #f0f2f5;
+            --border-width: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            color: #333;
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .logo-title-container { display: flex; align-items: center; }
+        .logo-img { height: 60px; margin-right: 15px; }
+
+        h1 { margin: 0; font-size: 1.4rem; color: var(--primary-blue); line-height: 1.2; }
+        h1 small { display: block; font-size: 0.6em; color: #666; font-weight: normal; margin-top: 4px; }
+
+        /* --- Intro Section --- */
+        .app-intro-container {
+            width: 100%; max-width: 800px; margin-bottom: 20px;
+            background: #fff; border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden;
+        }
+        .intro-header {
+            padding: 15px 20px; background: #fff; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid transparent; transition: all 0.3s;
+        }
+        .intro-header:hover { background: #f9f9f9; }
+        .intro-header h3 { margin: 0; color: var(--primary-blue); font-size: 1.1rem; }
+        .toggle-icon { font-size: 1.2rem; color: #888; transition: transform 0.3s; }
+        
+        .app-intro-container.open .intro-header { border-bottom: 1px solid #eee; }
+        .app-intro-container.open .toggle-icon { transform: rotate(180deg); }
+
+        .intro-content {
+            max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out;
+            padding: 0 20px; font-size: 0.95rem; color: #333; line-height: 1.6;
+        }
+        .app-intro-container.open .intro-content { max-height: 800px; padding: 20px 25px; }
+        .intro-content p { margin: 0 0 15px 0; }
+        .highlight-text { color: #e94e57; font-weight: bold; background: #fff0f0; padding: 0 4px; border-radius: 4px; }
+        
+        /* --- Controls --- */
+        .controls { display: flex; align-items: center; gap: 10px; }
+        select#level-select {
+            padding: 5px 10px; border-radius: 6px; border: 1px solid #ccc;
+            font-size: 1rem; color: #333; background: #fff; cursor: pointer; font-weight: bold;
+        }
+
+        button {
+            background: #fff; border: 1px solid #ccc; padding: 8px 15px;
+            border-radius: 6px; cursor: pointer; font-size: 0.9rem;
+            font-weight: bold; line-height: 1.1; transition: all 0.2s;
+        }
+        button:hover { background: #f0f0f0; transform: translateY(-1px); }
+        .btn-reset { color: #d32f2f; border-color: #ffcccc; }
+        .btn-export { color: #2e7d32; border-color: #ccffcc; }
+
+        /* --- Main Game Stage --- */
+        #game-stage {
+            perspective: 1000px; margin-bottom: 40px; display: flex;
+            justify-content: center; align-items: center; flex-direction: column;
+            min-height: 700px;
+        }
+
+        /* Deck */
+        #deck-container { cursor: pointer; transition: transform 0.2s; }
+        #deck-container:hover { transform: scale(1.05); }
+        .deck-card {
+            width: var(--card-width); height: var(--card-height);
+            background: linear-gradient(135deg, #2a75bb 0%, #3c5aa6 100%);
+            border-radius: 15px; border: 8px solid var(--level-color);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative;
+        }
+        .brain-icon-large {
+            width: 140px; height: 140px; background: white; border-radius: 50%;
+            border: 6px solid #fff; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 20px;
+        }
+        .deck-label { color: white; text-align: center; font-weight: bold; font-size: 1.5rem; text-shadow: 1px 1px 2px black; }
+        .deck-label small { display: block; font-size: 1rem; margin-top: 5px; opacity: 0.9; }
+
+        /* Card Structure */
+        .card-wrapper {
+            width: var(--card-width); height: var(--card-height);
+            position: relative; transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: none;
+        }
+        .card-wrapper.flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden; border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            background: white; overflow: hidden;
+            border: var(--border-width) solid var(--level-color);
+            box-sizing: border-box; display: flex; flex-direction: column;
+        }
+        .card-front { pointer-events: auto; }
+        .card-back { transform: rotateY(180deg); background: #fdfdfd; pointer-events: none; }
+        .card-wrapper.flipped .card-front { pointer-events: none; }
+        .card-wrapper.flipped .card-back { pointer-events: auto; }
+
+        /* Card Components */
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 15px; background: #f0f0f0; border-bottom: 2px solid #ddd;
+            font-size: 0.9rem; font-weight: bold; color: #444; flex-shrink: 0;
+        }
+        .level-badge { color: #d32f2f; font-weight: 800; } 
+
+        .card-image-box {
+            height: 140px; margin: 10px; background: #eee;
+            border: 3px solid #ccc; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 4.5rem; position: relative; flex-shrink: 0; border-radius: 8px;
+        }
+
+        .card-content-scroll {
+            flex: 1; overflow-y: auto; padding: 0 15px;
+            display: flex; flex-direction: column;
+        }
+
+        .card-title-bar {
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            padding: 8px 12px; border-radius: 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-shrink: 0;
+        }
+        .move-name { font-weight: bold; font-size: 1.1rem; line-height: 1.2; color: #222; }
+        
+        .scenario-text { font-size: 1rem; line-height: 1.6; color: #333; margin-bottom: 10px; }
+
+        .prompt-text {
+            background: #e8f4fd; border-left: 4px solid var(--primary-blue);
+            padding: 12px; margin: 10px 0 5px 0; font-size: 1rem;
+            color: #0d47a1; border-radius: 0 4px 4px 0; font-weight: bold;
+        }
+
+        .card-bottom-fixed {
+            padding: 10px 15px 5px 15px; background: white; border-top: 1px dashed #eee;
+            flex-shrink: 0; display: flex; flex-direction: column; align-items: center; z-index: 20;
+        }
+
+        .stress-slider-container { width: 100%; text-align: center; margin-bottom: 10px; }
+        input[type=range] {
+            width: 90%; height: 8px; border-radius: 5px;
+            background: linear-gradient(90deg, #4CAF50, #FFEB3B, #F44336);
+            outline: none; -webkit-appearance: none; margin-top: 8px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: #fff; border: 3px solid #333; cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Unified Outline Button */
+        .btn-outline {
+            background: #fff; border: 2px solid var(--level-color); color: #555;
+            width: 100%; padding: 10px; border-radius: 25px; font-size: 1rem; 
+            font-weight: bold; cursor: pointer; transition: all 0.2s;
+            margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .btn-outline:hover { background: var(--level-color); color: white; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+        .card-brand-footer {
+            height: 36px; background: var(--level-color);
+            color: #444; font-size: 0.65rem; font-weight: bold;
+            display: flex; justify-content: center; align-items: center;
+            flex-shrink: 0; letter-spacing: 1px;
+        }
+
+        .guide-section { padding: 15px; flex: 1; overflow-y: auto; background: #fcfcfc; }
+        .brain-check, .tips-box { margin-bottom: 15px; }
+        .section-title {
+            font-weight: bold; color: var(--primary-blue); margin-bottom: 8px;
+            display: flex; align-items: baseline; gap: 5px; font-size: 1rem;
+            border-bottom: 1px solid #eee; padding-bottom: 5px;
+        }
+        .guide-text { font-size: 0.95rem; color: #333; margin: 0; line-height: 1.6; }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { margin-bottom: 8px; font-size: 0.95rem; color: #333; line-height: 1.5; }
+
+        .trainer-note-section { background: #eef4fa; padding: 12px; border-top: 2px solid #ccc; flex-shrink: 0; padding-bottom: 10px; }
+        .form-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; align-items: center;}
+        
+        .mood-selector {
+            display: flex; justify-content: space-between; width: 100%;
+            margin-bottom: 8px; background: white; padding: 5px;
+            border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;
+        }
+        .mood-option {
+            display: flex; flex-direction: column; align-items: center; cursor: pointer;
+            opacity: 0.4; transition: all 0.2s; font-size: 1.2rem; flex: 1;
+        }
+        .mood-option:hover { opacity: 0.7; transform: scale(1.1); }
+        .mood-option.selected {
+            opacity: 1; transform: scale(1.2); font-weight: bold; text-shadow: 0 0 10px gold;
+        }
+        .mood-label { font-size: 0.6rem; margin-top: 2px; }
+
+        textarea {
+            width: 100%; height: 60px; border: 1px solid #ccc; border-radius: 4px;
+            padding: 8px; resize: none; font-family: inherit; box-sizing: border-box;
+        }
+        .btn-save { 
+            width: 100%; border: none; padding: 10px; border-radius: 4px;
+            cursor: pointer; font-weight: bold; margin-top: 8px;
+            background: var(--primary-blue); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-save:hover { background: #1e5c99; }
+
+        /* --- Binder --- */
+        #binder-section { width: 100%; max-width: 900px; margin-top: 30px; }
+        .binder-header-row {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 15px;
+            flex-wrap: wrap; gap: 10px;
+        }
+        .binder-header-row h2 { margin: 0; color: #555; font-size: 1.2rem; }
+        
+        .badges-container { display: flex; gap: 10px; }
+        .badge { 
+            font-size: 1.5rem; filter: grayscale(100%); opacity: 0.5; transition: all 0.3s; cursor: help; position: relative;
+        }
+        .badge.unlocked { filter: grayscale(0%); opacity: 1; transform: scale(1.1); cursor: default; }
+        .badge::after {
+            content: '🔒'; position: absolute; bottom: -2px; right: -5px; font-size: 0.8rem;
+        }
+        .badge.unlocked::after { content: ''; }
+        
+        .binder-grid {
+            display: grid; gap: 15px; padding: 10px; justify-content: center;
+            grid-template-columns: repeat(2, 1fr);
+        }
+        @media (min-width: 600px) { .binder-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 900px) { .binder-grid { grid-template-columns: repeat(5, 1fr); } }
+
+        .binder-slot {
+            width: 100%; aspect-ratio: 2.5 / 3.5; background: #e0e0e0;
+            border-radius: 8px; display: flex; justify-content: center; align-items: center;
+            cursor: default; position: relative; border: 2px dashed #aaa;
+        }
+        .binder-card {
+            width: 100%; height: 100%; border-radius: 8px; background: white;
+            border: 2px solid var(--level-color);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; font-size: 0.9rem;
+            text-align: center; cursor: pointer; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 5px; box-sizing: border-box;
+        }
+        .binder-card:hover { transform: scale(1.05); border-color: var(--primary-blue); }
+        .binder-emoji { font-size: 2rem; margin-bottom: 5px; }
+        .binder-check { position: absolute; top: 2px; right: 2px; color: green; background: white; border-radius: 50%; width: 20px; height: 20px; font-size: 14px; line-height: 20px; text-align: center;}
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .modal-close-btn {
+            position: absolute; top: -15px; right: -15px; width: 36px; height: 36px;
+            background: #333; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: bold; cursor: pointer; z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: 2px solid #fff;
+        }
+        
+        /* Text Modal (Privacy, License, Feedback) */
+        .text-modal-content {
+            background: white; padding: 30px; border-radius: 12px;
+            width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;
+            position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .text-modal-content h3 { color: var(--primary-blue); margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+        .text-modal-content p, .text-modal-content li { font-size: 0.95rem; line-height: 1.6; color: #444; }
+
+        /* Reset Modal */
+        .reset-modal-content {
+            background: white; padding: 25px; border-radius: 10px;
+            width: 90%; max-width: 400px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .reset-btns { margin-top: 20px; display: flex; justify-content: center; gap: 10px; }
+        .btn-confirm-reset { background: #d32f2f; color: white; padding: 8px 20px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;}
+        .btn-cancel-reset { background: #ccc; color: #333; padding: 8px 20px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;}
+
+        /* Reward Modal */
+        .reward-modal-content {
+            background: white; padding: 30px; border-radius: 20px;
+            width: 90%; max-width: 500px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            border: 4px solid var(--level-color);
+            position: relative; animation: popIn 0.5s ease-out;
+        }
+        .reward-emoji { font-size: 4rem; margin-bottom: 10px; display: block; animation: bounce 2s infinite; }
+        .reward-title { font-size: 1.8rem; font-weight: bold; color: var(--primary-blue); margin-bottom: 20px; }
+        .reward-message-box { background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; border-left: 4px solid var(--primary-blue); }
+        .reward-label { font-size: 0.8rem; font-weight: bold; color: #666; margin-bottom: 3px; display: block;}
+
+        /* History Modal */
+        .history-card-wrapper {
+            position: relative; width: 95%; max-width: 800px; max-height: 90vh;
+            background: white; border: var(--border-width) solid var(--level-color);
+            border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; overflow: hidden;
+            animation: popIn 0.2s ease-out;
+        }
+        .history-card-header {
+            padding: 10px 15px; background: #f0f0f0; border-bottom: 2px solid #ddd;
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: bold; color: #444; flex-shrink: 0;
+        }
+        .history-card-body { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
+        .history-left-col { flex: 1; padding: 20px; overflow-y: auto; border-right: 1px dashed #ccc; min-width: 300px; }
+        .history-right-col { flex: 1; padding: 20px; overflow-y: auto; background: #fffcf0; min-width: 300px; }
+        .history-brand-footer {
+            height: 36px; background: var(--level-color); color: #444; font-size: 0.65rem; font-weight: bold;
+            display: flex; justify-content: center; align-items: center; flex-shrink: 0; letter-spacing: 1px;
+        }
+        @media (max-width: 700px) {
+            .history-card-body { flex-direction: column; }
+            .history-left-col { border-right: none; border-bottom: 1px dashed #ccc; min-width: auto; height: 50%;}
+            .history-right-col { min-width: auto; height: 50%; }
+        }
+
+        /* Animations & Toast */
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-20px);} 60% {transform: translateY(-10px);} }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8); color: white; padding: 12px 24px; border-radius: 30px;
+            opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 2000;
+            font-size: 0.95rem; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .toast.show { opacity: 1; }
+
+        /* Feedback Modal Styles */
+        .feedback-stars { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+        .star-icon { font-size: 2rem; cursor: pointer; color: #ddd; transition: color 0.2s; }
+        .star-icon.active { color: #ffd700; }
+        .feedback-textarea { width: 100%; height: 80px; border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-bottom: 10px; font-family: inherit; box-sizing: border-box; }
+        .feedback-input { width: 100%; height: 40px; border: 1px solid #ccc; border-radius: 8px; padding: 8px; margin-bottom: 10px; font-family: inherit; box-sizing: border-box; }
+        .feedback-divider { border-top: 1px dashed #eee; margin: 15px 0; width: 100%; }
+
+        /* Footer */
+        footer {
+            width: 100%; max-width: 800px; background: #fff; padding: 20px;
+            border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 30px;
+            color: #555; font-size: 0.9rem; line-height: 1.5; text-align: center;
+        }
+        .footer-credit {
+            margin-bottom: 15px; color: #444; font-weight: bold;
+        }
+        .footer-nav {
+            display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .footer-nav span {
+            cursor: pointer; color: #2a75bb; font-weight: bold; font-size: 0.9rem;
+        }
+        .footer-nav span:hover { text-decoration: underline; color: #e94e57; }
+        
+        .footer-social-links {
+            display: flex; justify-content: center; gap: 20px; margin: 15px 0; flex-wrap: wrap;
+        }
+        .footer-social-link {
+            display: flex; align-items: center; color: #e94e57; text-decoration: none;
+            font-weight: bold; font-size: 1rem; gap: 5px; cursor: pointer;
+        }
+        .footer-social-link:hover { color: #c0392b; text-decoration: none; }
+        .social-icon { width: 20px; height: 20px; fill: currentColor; }
+        
+        .copyright { margin-top: 10px; font-size: 0.8rem; color: #888; border-top: 1px solid #eee; padding-top: 15px; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-title-container">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgNTAwIj4KICA8cmVjdCB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgZmlsbD0iI2U4ZjEyNyIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNDUlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iJ0ZyZWRva2EnLCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNjAwIiBmb250LXNpemU9IjkwIiBmaWxsPSIjZTk0ZTU3IiBsZXR0ZXItc3BhY2luZz0iNSI+5aSn6IWm5aq95aq9PC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNzAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iJ0ZyZWRva2EnLCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNDAwIiBmb250LXNpemU9IjY1IiBmaWxsPSIjZTk0ZTU3IiBsZXR0ZXItc3BhY2luZz0iMyI+QnJhaW55IE1hbWE8L3RleHQ+Cjwvc3ZnPg==" alt="BrainyMama Logo" class="logo-img">
+            <h1>
+                Flip It! Kids
+                <small>Resilience Training</small>
+            </h1>
+        </div>
+        <div class="controls">
+            <select id="level-select" onchange="changeLevel(this.value)">
+                <option value="1">Level 1 (Basic)</option>
+                <option value="2">Level 2 (Intermediate)</option>
+                <option value="3">Level 3 (Advanced)</option>
+            </select>
+            <span id="progress-text" style="font-size:0.9rem; color:#555; font-weight: bold;">0 / 20</span>
+            <button class="btn-reset" onclick="openResetModal()">↻ Reset</button>
+        </div>
+    </header>
+
+    <div class="app-intro-container open" id="intro-box">
+        <div class="intro-header" onclick="toggleIntro()">
+            <h3>Turn "Oh No" into "I Can"</h3>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="intro-content">
+            <p>Freaking out when friends ignore them? Tantrums when plans change? Don't worry, it's not the child's fault. Their brain's "Prefrontal Cortex" is still under construction!</p>
+            
+            <p>"Flip It! Kids" is a <span class="highlight-text">"Real Life Simulator"</span> designed for lower primary school students (6-9 years old). Combining brain science and child psychology, it translates abstract theories into life challenges kids can understand. Gradually building brain resilience and fostering a Growth Mindset.</p>
+            
+            <p>🌟 <strong>How to help your child?</strong><br>Through the "Stop → Shift → Solve" steps designed by Brainymama, we turn every breakdown into an opportunity to practice "Executive Functions".</p>
+            
+            <p style="margin-top:10px; font-weight:bold; color:#2a75bb;">Draw 1-3 cards daily with your child to build their brain resilience!</p>
+        </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div id="game-stage">
+        <!-- Message when done -->
+        <div id="completion-message" style="display:none; text-align: center;">
+            <h2>🎉 Congratulations!</h2>
+            <p>You have completed all scenarios for this level.</p>
+            <p>Check your collection below to review your conversations!</p>
+        </div>
+
+        <!-- The Deck -->
+        <div id="deck-container" onclick="drawCard()">
+            <div class="deck-card">
+                <div class="brain-icon-large">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#2a75bb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+                </div>
+                <div class="deck-label">
+                    Tap to Draw
+                    <small>Draw Card</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Active Card -->
+        <div class="card-wrapper" id="active-card">
+            <!-- Front -->
+            <div class="card-face card-front">
+                <div class="card-header">
+                    <span id="card-type">Category</span>
+                    <span class="level-badge" id="card-level">Lv.1</span>
+                </div>
+                <div class="card-image-box">
+                    <span id="card-image" style="font-size: 5rem;">🤔</span>
+                </div>
+                
+                <div class="card-content-scroll">
+                    <div class="card-title-bar">
+                        <span class="move-name" id="card-title">Title</span>
+                        <span id="card-cat-icon">🔥</span>
+                    </div>
+                    <div class="scenario-text" id="card-scen">
+                        Scenario...
+                    </div>
+                    
+                    <div class="prompt-text">
+                        Let's think: What should we do?
+                    </div>
+                </div>
+
+                <div class="card-bottom-fixed">
+                    <div class="stress-slider-container">
+                        <small style="font-size:0.8rem; color:#888;">
+                            Stress Level: <span id="stress-val-display" style="font-weight:bold; color:#d32f2f;">5</span>
+                        </small>
+                        <br>
+                        <input type="range" id="front-stress-slider" min="1" max="10" value="5" oninput="document.getElementById('stress-val-display').innerText=this.value">
+                    </div>
+                    <button class="btn-outline" onclick="flipCard()">Flip for Guide</button>
+                </div>
+
+                <div class="card-brand-footer">Brainymama</div>
+            </div>
+
+            <!-- Back -->
+            <div class="card-face card-back">
+                <div class="card-header" style="justify-content:center; background:#fffbe6; border-bottom:1px dashed #ccc;">
+                    <button class="btn-outline" onclick="flipCard()" style="margin:0; width:auto; padding: 5px 20px;">↻ Flip Back</button>
+                </div>
+                <div class="guide-section">
+                    <div class="brain-check">
+                        <div class="section-title">🧠 Brain Check</div>
+                        <p class="guide-text" id="guide-brain">Content...</p>
+                    </div>
+                    <div class="tips-box">
+                        <div class="section-title">💡 Tips</div>
+                        <ul id="guide-tips" class="tips-list">
+                            <li>Tip 1</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="trainer-note-section">
+                    <div class="form-row">
+                        <strong style="color:var(--primary-blue);">📝 Notes</strong>
+                        <input type="date" id="note-date">
+                    </div>
+                    
+                    <div class="mood-selector" id="mood-options">
+                        <div class="mood-option" onclick="selectMood(this, '😌')" data-val="😌">😌<div class="mood-label">Calm</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '😄')" data-val="😄">😄<div class="mood-label">Happy</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '😢')" data-val="😢">😢<div class="mood-label">Sad</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '😠')" data-val="😠">😠<div class="mood-label">Angry</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '😨')" data-val="😨">😨<div class="mood-label">Scared</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '😒')" data-val="😒">😒<div class="mood-label">Jealous</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '🤯')" data-val="🤯">🤯<div class="mood-label">Meltdown</div></div>
+                    </div>
+
+                    <textarea id="note-text" placeholder="Record child's response..."></textarea>
+                    <button class="btn-save" onclick="saveCard()">Save to Collection</button>
+                </div>
+
+                <div class="card-brand-footer">Brainymama</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Binder Section -->
+    <div id="binder-section">
+        <div class="binder-header-row">
+            <h2>🗂️ My Collection</h2>
+            <div class="badges-container" id="badges-container">
+                <!-- Badges injected by JS -->
+            </div>
+            <button class="btn-export" onclick="exportDataCSV()">📥 Export Data</button>
+        </div>
+        
+        <div class="binder-grid" id="binder-grid">
+            <!-- Slots generated by JS -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <!-- Social Links with Icons -->
+        <div class="footer-social-links">
+            <a href="https://www.facebook.com/brainymamaedu" target="_blank" class="footer-social-link">
+                <svg class="social-icon" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                Brainymama FB
+            </a>
+            <a href="https://wantingyeh1988.wixsite.com/brainymama/about-me" target="_blank" class="footer-social-link">
+                <svg class="social-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                About Brainymama
+            </a>
+            <a href="javascript:void(0)" onclick="shareApp()" class="footer-social-link">
+                <svg class="social-icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                Share with Friends
+            </a>
+        </div>
+
+        <div class="footer-credit">
+            Plan & Supervise: Brainymama (PhD in Psychology) | AI translation by Gemini
+        </div>
+
+        <div class="footer-nav">
+            <span onclick="showInfo('license')">[Terms]</span>
+            <span onclick="showInfo('privacy')">[Privacy]</span>
+            <span onclick="showInfo('disclaimer')">[Disclaimer]</span>
+            <span onclick="openFeedbackModal()">[Feedback for Brainymama]</span>
+        </div>
+
+        <div class="copyright">
+            © 2025 Brainymama. Designed with Gemini Vibe Coding
+        </div>
+    </footer>
+
+    <!-- View Modal (History) -->
+    <div class="modal-overlay" id="view-modal" onclick="closeModal(event)">
+        <div class="modal-content" id="modal-content-area"></div>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div class="modal-overlay" id="reset-modal" style="z-index: 2000;">
+        <div class="reset-modal-content">
+            <h3 style="color:#d32f2f; margin-top:0;">⚠️ Reset Data?</h3>
+            <p id="reset-msg-text" style="color:#555; line-height:1.5;"></p>
+            <div class="reset-btns">
+                <button class="btn-confirm-reset" onclick="confirmReset()">Delete</button>
+                <button class="btn-cancel-reset" onclick="closeResetModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reward Modal -->
+    <div class="modal-overlay" id="reward-modal" style="z-index: 3000;">
+        <div class="reward-modal-content" id="reward-content">
+            <!-- Content Injected via JS -->
+        </div>
+    </div>
+
+    <!-- Info Modal (Generic Text) -->
+    <div class="modal-overlay" id="info-modal" style="z-index: 2500;">
+        <div class="text-modal-content" id="info-content">
+            <div class="modal-close-btn" onclick="document.getElementById('info-modal').style.display='none'">×</div>
+            <div id="info-body"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Saved!</div>
+
+    <script>
+        // Collapsible Intro Logic
+        function toggleIntro() {
+            const container = document.getElementById('intro-box');
+            container.classList.toggle('open');
+        }
+
+        // --- 1. Data Source (English Translated) ---
+        const cardsData = [
+            // LEVEL 1 (20 Cards)
+            {id:1, level:1, category:"Social", emoji:"🔥", title:"Jumping the Queue", scen:"You have been waiting for the slide for a long time, but a kid cuts right in front of you. You feel so angry!", brain:"It feels unfair! Your amygdala (alarm) is ringing. But hitting might make you the one in trouble.", tips:["Be Brave: Breathe, and firmly say 'Please wait in the queue, I was here first.'","Get Help: If they don't listen, ask an adult. It's solving a problem, not tattling."]},
+            {id:2, level:1, category:"Social", emoji:"🔥", title:"Accidental Bump", scen:"You accidentally bumped into a classmate while running, and they are crying. You didn't mean to, but you are scared of getting in trouble.", brain:"Your brain wants to run to avoid trouble. But taking responsibility makes you a better friend!", tips:["Care First: Ask 'Are you okay? Are you hurt?'","Fix It: Sincerely say 'Sorry, I didn't mean to.' Apologizing is brave!"]},
+            {id:3, level:1, category:"Social", emoji:"🔥", title:"Joining In", scen:"You see a group playing tag. It looks fun and you want to join, but you are too scared to walk over.", brain:"This is shyness. Your brain is afraid of rejection. But don't freeze!", tips:["Observer: Watch for 30s to understand the game.","Magic Words: When a round ends, ask 'That looks fun, can I play?'"]},
+            {id:4, level:1, category:"Social", emoji:"🔥", title:"Toy Envy", scen:"A classmate has a robot toy you really want. You are staring at it and really want to grab it.", brain:"Your brain screams 'I want it NOW!' We need to pump the brakes for the brain.", tips:["Wait Art: Ask 'Can I play when you are done?'","Trade: Offer a toy you have, 'Want to trade for a bit?'"]},
+            {id:5, level:1, category:"Social", emoji:"🔥", title:"Sore Loser", scen:"You lost a board game. You are so mad you want to flip the board and yell, \"I quit!\"", brain:"Brain wants to win to feel powerful. Losing hurts, but it shows where we can improve!", tips:["Sportsmanship: A real pro says 'Good game' even when losing.","Self-Talk: 'Just bad luck this time. I'll do better next round!'"]},
+            {id:6, level:1, category:"Family", emoji:"🌿", title:"Can't Wait to Share", scen:"Mum is on an important call. You just finished a drawing and want to show her NOW, so you keep talking loudly next to her.", brain:"Your brain is in 'Excited Mode' and can't switch to 'Quiet Mode'. You're not being bad, just eager!", tips:["Empathy: Mum wants to see, but needs to finish the call. Helping her finish faster is better.","Secret Signal: Use a hand signal (like touching her arm) to say 'I have something to show you.'"]},
+            {id:7, level:1, category:"Family", emoji:"🌿", title:"Overwhelmed by Mess", scen:"Lego and blocks are all over the floor. Dad says, \"Clean up!\" It looks like too much work, so you pretend not to hear.", brain:"Big messes make the brain freeze and think 'I can't do it'. We need to trick the brain.", tips:["Break it Down: Be a 'Red Detective'. Just find the red pieces first.","Gamify: Race! See if the cars or the blocks can get back to the box faster."]},
+            {id:8, level:1, category:"Family", emoji:"🌿", title:"Toy Tug-of-War", scen:"You and your sibling both grab the same toy at the same time. Neither of you will let go, and a fight is about to start.", brain:"Brain thinks 'Limited Resources', so you must fight. Let's teach the brain to 'Multiply Fun'.", tips:["Win-Win: Can you play together? One throws, one catches!","Turns: Set a 5-minute timer. When it rings, switch!"]},
+            {id:9, level:1, category:"Family", emoji:"🌿", title:"Time to Go", scen:"Having fun at the park, Dad says, \"Time to go.\" You go limp on the ground and scream, \"NO!\"", brain:"This is 'Transition Trouble'. Your brain is stuck in 'Play Mode'. Shutting down abruptly hurts!", tips:["Ritual: Say 'Bye-bye slide!', take one last slide to pack the fun in your pocket.","Look Forward: On the way home, let's plan what to play next time!"]},
+            {id:10, level:1, category:"Family", emoji:"🌿", title:"Picky Eater", scen:"Dinner has green peppers, which you hate. You feel disgusted and want to throw them on the floor.", brain:"Brain is protecting you from 'weird' food. But you are an adventurer, and your taste buds are growing!", tips:["Mini Adventure: Just try a tiny mouse bite. You don't have to finish it.","Polite No: Push it to the side and say 'I don't want this today, thanks.'"]},
+            {id:11, level:1, category:"Emotion", emoji:"🔮", title:"Mistake in Art", scen:"You are drawing a dinosaur but make a mistake. You get so mad you crumple the paper and throw it!", brain:"Frustration! Brain wants perfection. But many great artworks started from mistakes!", tips:["Magic Twist: Can the crooked line become a scar or lightning? Use imagination!","Acceptance: 'This paper is practice. The next one will be even better.'"]},
+            {id:12, level:1, category:"Emotion", emoji:"🔮", title:"Afraid of Dark", scen:"Lights out. You think there's a monster in the closet. You keep calling Mum and can't close your eyes.", brain:"Your brain makes up stories in the dark because you are so smart and imaginative!", tips:["Guardian: Pick a toy to be your guard. It will watch the closet.","Night Light: Keep a small light on so you can see your room is safe."]},
+            {id:13, level:1, category:"Emotion", emoji:"🔮", title:"Separation Anxiety", scen:"You arrive at a party or camp. Even though there are other kids, you feel strange and cling to parents.", brain:"Your brain's guard is checking safety. You just need time to 'warm up'. It's normal!", tips:["Observe: Stand back and watch first. No need to rush in.","Small Task: 'Can you carry your water bottle and sit with me over there?'"]},
+            {id:14, level:1, category:"Emotion", emoji:"🔮", title:"Giving Up", scen:"You try riding a bike for the first time and fail. You feel frustrated and yell, \"I'll never learn! I quit!\"", brain:"Brain feels 'stupid', but struggling means your brain is growing like a muscle!", tips:["Not Yet: You can't do it... YET. Add that word!","Progress: You fell, but you got on the bike! That's step one."]},
+            {id:15, level:1, category:"Emotion", emoji:"🔮", title:"Over-excited", scen:"A friend visits and you are so happy! You start jumping on the sofa and accidentally push your friend over.", brain:"Full throttle, no brakes! Too much happiness can cause a crash. Cool down the engine.", tips:["Check Friend: Look at their face. Are they laughing or hurting?","Freeze Game: Count to 3 and freeze like a statue to fix the brakes."]},
+            {id:16, level:1, category:"Safety", emoji:"🛡️", title:"Getting Lost", scen:"You are looking at toys in the supermarket. You turn around and Mum and Dad are gone!", brain:"Panic! Brain says 'Run and Find', but 'Staying Calm' is the superpower here.", tips:["Be a Tree: Stand still. Parents will come back to where they left you.","Uniforms: Look for shop employees in uniforms for help."]},
+            {id:17, level:1, category:"Safety", emoji:"🛡️", title:"Stranger Danger", scen:"A stranger at the park offers you a lollipop and smiles, \"This is for you, it's yummy!\"", brain:"Brain likes sweets and wants to be polite. But safety is more important than politeness.", tips:["Rule: Never take things from strangers, even nice ones.","No Thanks: Shake your head and run to parents. You don't have to be polite."]},
+            {id:18, level:1, category:"Safety", emoji:"🛡️", title:"Body Safety", scen:"While playing, a neighbor boy tries to touch you where your underwear covers. He says it's a \"body check.\"", brain:"You might freeze when things get weird. Remember, your body is your castle. You are the King/Queen.", tips:["Boundary: Underwear zone is PRIVATE. No touching allowed.","Yell: Scream 'NO! GO AWAY!' and tell parents. It's not your fault."]},
+            {id:19, level:1, category:"Safety", emoji:"🛡️", title:"Hot Stuff", scen:"A bowl of hot soup is steaming on the table. You are hungry and tiptoe to reach it.", brain:"Brain sees food, ignores danger. Train brain: White Smoke = Red Alert!", tips:["Danger Sign: White smoke means SUPER HOT. Wait for it to clear.","Ask Help: Tiptoeing is wobbly. Ask an adult to hand it to you safely."]},
+            {id:20, level:1, category:"Safety", emoji:"🛡️", title:"Street Safety", scen:"Your ball rolls into the busy street! You are worried and want to run after it immediately.", brain:"'Tunnel Vision'. You only see the ball, not the cars. What is more important?", tips:["Value: We can buy a new ball. We can't buy a new YOU. You are precious.","Solution: Stand by the road and ask an adult to help check for cars."]},
+
+            // LEVEL 2 (20 Cards)
+            {id:21, level:2, category:"Social", emoji:"🔥", title:"Whispering Friends", scen:"You see two friends whispering and looking at you while laughing. You feel they must be saying bad things about you.", brain:"Your brain is guessing. It assumes the worst to protect you, but it might be wrong.", tips:["Fact Check: Are they really being mean? Or just laughing at a joke?","Ask: Walk over and smile, 'What's the secret? Can I hear?'"]},
+            {id:22, level:2, category:"Social", emoji:"🔥", title:"The Bossy Friend", scen:"Your friend always decides the game. If you don't listen, they say, \"I won't be your friend anymore.\"", brain:"This is controlling. Real friendship is equal, not bossing people around.", tips:["Boundary: 'I don't want to play that. I'll play something else for now.'","Turns: 'You picked yesterday. My turn today. Fair is fair.'"]},
+            {id:23, level:2, category:"Social", emoji:"🔥", title:"Name Calling", scen:"Classmates call you a nickname you don't like and laugh. You feel embarrassed and sad.", brain:"Your brain feels hurt. But the best weapon against teasing is being 'Boring'.", tips:["Boring Response: Shrug and say 'So?' and walk away.","Serious Talk: Tell them privately 'I don't like that name. Stop it.'"]},
+            {id:24, level:2, category:"Social", emoji:"🔥", title:"Tattling vs. Reporting", scen:"You see a classmate break a small rule (like forgetting a book). You want to tell the teacher immediately.", brain:"Brain loves 'Justice' and catching mistakes. But are you helping or causing trouble?", tips:["Filter: Is anyone hurt? Is anything broken? If not, maybe don't tell.","Help Directly: Share your book with him. Be a hero, not a tattletale."]},
+            {id:25, level:2, category:"Social", emoji:"🔥", title:"Breaking a Toy", scen:"You borrowed a friend's toy and accidentally broke it. You are panicked and scared to tell them.", brain:"Guilt is scary. You fear losing a friend. But trust is harder to fix than a toy.", tips:["Fix It: Ask parents: Can we fix it? Or buy a replacement?","Courage: 'I'm sorry I broke it. I will make it right.' Honesty is brave."]},
+            {id:26, level:2, category:"Family", emoji:"🌿", title:"That's Not Fair!", scen:"Mum took everyone shopping. Brother got trainers, Baby got nappies. You got nothing. You feel it's unfair!", brain:"'Fairness Radar' activated. Brain thinks Fair = Equal. But Real Fair = Getting what you NEED.", tips:["Need vs Want: They got things they NEED. Do you NEED anything right now?","Invisible Love: Not buying means you care for your stuff well. Parents will buy for you when you need it."]},
+            {id:27, level:2, category:"Family", emoji:"🌿", title:"Being a Host", scen:"Guests are visiting. You are bored and keep interrupting parents or jumping around.", brain:"Brain feels ignored. Use this chance to practice social skills!", tips:["Polite Interrupt: Touch parent's arm and wait for eye contact.","Host Mission: Be the 'Captain of Hosting'. Serve water or play with guest kids."]},
+            {id:28, level:2, category:"Family", emoji:"🌿", title:"Screen Time's Up", scen:"Alarm rings for screen time. But you are at a critical level and haven't saved. Parents say stop NOW.", brain:"Dopamine crash! Stopping is hard. But a deal is a deal.", tips:["Negotiate: 'Can I have 2 mins to save? I promise to stop then.'","Credit: Keep your promise, and they will trust you next time."]},
+            {id:29, level:2, category:"Family", emoji:"🌿", title:"Wrongly Accused", scen:"You didn't make the mess, but Mum scolds you for it. You feel so wronged.", brain:"Amygdala explodes when accused! But yelling back makes it worse.", tips:["Calm Explain: Wait, breathe, then say 'Mum, I didn't do that.'","Proof: 'I'll pick it up, but I want you to know I didn't do it.'"]},
+            {id:30, level:2, category:"Family", emoji:"🌿", title:"My Secrets", scen:"You find parents or siblings reading your diary or going through your bag. You feel angry.", brain:"Your boundary was crossed. You need space. It's part of growing up.", tips:["Express: 'I don't like it when you look at my stuff. Please ask me first.'","Trust: Show them your bag is safe, but ask to keep the diary private."]},
+            {id:31, level:2, category:"Emotion", emoji:"🔮", title:"Stage Fright", scen:"Teacher asks you to speak in front of the class. Your heart races and your mind goes blank.", brain:"Fight or Flight! Brain thinks classmates are lions. Tell brain: 'They are just friends.'", tips:["Reframe: 'I'm not scared, I'm EXCITED!' Heartbeat = Power Up.","Sharing: You are giving a gift of story, not being tested."]},
+            {id:32, level:2, category:"Emotion", emoji:"🔮", title:"Green-Eyed Monster", scen:"Your best friend won a contest, and you didn't. Everyone praises him. You feel jealous.", brain:"Jealousy! Brain thinks 'He won = I lost'. But his success doesn't mean you are bad.", tips:["Share Joy: He's your friend. Be happy for him.","Learn: Ask 'How did you do it? Teach me?' Then you get better too!"]},
+            {id:33, level:2, category:"Emotion", emoji:"🔮", title:"Boring Tasks", scen:"Homework is so boring. You sit there zoning out for 30 minutes without writing a single word.", brain:"Brain hates boring stuff. We need dopamine to trick the brain.", tips:["Timer Challenge: 'Can I finish in 10 mins?' Race the clock!","Reward: 'Finish this page, then Lego time.' Give brain a goal."]},
+            {id:34, level:2, category:"Emotion", emoji:"🔮", title:"FOMO - Left Out", scen:"Classmates went to the cinema this weekend, but you weren't invited. You feel excluded.", brain:"FOMO (Fear Of Missing Out). Brain feels unsafe. But maybe they just forgot.", tips:["Self-Worth: You are still important. You had fun too!","Take Action: You plan the next event! 'Who wants to go to the park?'"]},
+            {id:35, level:2, category:"Emotion", emoji:"🔮", title:"Embarrassment", scen:"You trip in the hallway or spill soup on yourself. Everyone sees. You want to disappear.", brain:"Embarrassment! Brain panics. But people focus on themselves. They will forget tomorrow.", tips:["Humor: Laugh at yourself. 'Nice move, me!' It makes it less awkward.","Accept it: Brush it off. Everyone falls sometimes."]},
+            {id:36, level:2, category:"Safety", emoji:"🛡️", title:"Crowded Places", scen:"At a crowded event. You let go of the hand and get pushed away by the crowd. Parents are gone.", brain:"Crowds move fast. Running makes you more lost. Use 'High Ground' or 'Safe People'.", tips:["Wait & Watch: Move to the side and FREEZE.","Find Police/Staff: Find a uniform or someone with a microphone to announce you."]},
+            {id:37, level:2, category:"Safety", emoji:"🛡️", title:"Bad Secrets", scen:"A relative or coach says, \"Let's play a game, but it's our little secret. Don't tell Mum.\"", brain:"Bad guys use secrets to control. Happy surprises are secrets; weird feelings are DANGER.", tips:["Good vs Bad: Does this secret make you worry? That's a BAD secret.","Break the Rule: Safety first. Tell a trusted adult immediately."]},
+            {id:38, level:2, category:"Safety", emoji:"🛡️", title:"Online Friends", scen:"In an online game, a teammate asks, \"How old are you? Where do you live? Let's meet up.\"", brain:"You don't know who is behind the screen. Personal info is your shield. Keep it up!", tips:["Game Talk Only: Talk about the game, not your life.","Block: If they ask too much, Block them and tell parents."]},
+            {id:39, level:2, category:"Safety", emoji:"🛡️", title:"Peer Pressure Dare", scen:"Friends say, \"Jump from this high place and you're a hero! If not, you're a chicken!\"", brain:"Peer Pressure! Brain fears rejection. But real bravery is staying safe.", tips:["Real Hero: Doing dumb things isn't brave. Saying 'No' is brave.","Change Topic: 'That's boring. Let's race instead!'"]},
+            {id:40, level:2, category:"Safety", emoji:"🛡️", title:"Medical Emergency", scen:"Only you and Grandma are home. She suddenly faints and won't wake up. You are terrified.", brain:"Emergency! Brain freezes. But you are the Commander now. Calm down to save lives.", tips:["Call Emergency: Dial the emergency number immediately.","Speak Clearly: Say who you are, WHERE you are, and what happened. Stay on the line."]},
+
+            // LEVEL 3 (20 Cards)
+            {id:41, level:3, category:"Social", emoji:"🔥", title:"Cliques & Exclusion", scen:"A group of classmates formed a \"club\" and told you, \"You can't sit with us.\"", brain:"Brain needs belonging. It feels like life or death. But forcing your way in never works.", tips:["Self-Value: Real friends make you feel good. Do you even like them?","New Links: Look for others who are left out. Start your own happy club."]},
+            {id:42, level:3, category:"Social", emoji:"🔥", title:"Gossip", scen:"Your best friend gossips about a classmate and wants you to hate them too. But you don't think that person is bad.", brain:"Conformity Pressure. Brain fears being targeted. But your moral compass says NO.", tips:["Neutral: 'Really? He was nice to me yesterday.' Cool down the gossip.","Switch: 'Boring... Let's go play ball!' Move to positive things."]},
+            {id:43, level:3, category:"Social", emoji:"🔥", title:"Ethical Dilemma", scen:"You saw your best friend cheating or stealing. They told you to keep quiet. You feel torn inside.", brain:"Loyalty vs. Honesty. True loyalty is helping a friend stay out of trouble, not hiding it.", tips:["Private Talk: 'I'm your friend, but I don't want you to get in big trouble.'","Safety First: If it's dangerous/illegal, telling an adult is SAVING them, not hurting them."]},
+            {id:44, level:3, category:"Social", emoji:"🔥", title:"Teasing vs. Bullying", scen:"A classmate keeps bothering you. When you say stop, they say, \"It's just a joke! Don't be so sensitive.\"", brain:"Gaslighting! Rule: If one person isn't laughing, it's NOT a joke. It's bullying.", tips:["Stand Firm: 'I don't think it's funny. Stop.'","Walk Away: If they don't stop, just leave."]},
+            {id:45, level:3, category:"Social", emoji:"🔥", title:"Real Apology", scen:"You hurt a friend and said \"sorry,\" but they are still mad. You feel annoyed.", brain:"Quick sorry is for YOU. Real apology is for THEM. It needs action.", tips:["3-Step Apology: 'I am sorry for [X]. Next time I will [Y].'","Make Amends: 'What can I do to make it better?'"]},
+            {id:46, level:3, category:"Family", emoji:"🌿", title:"Negotiation", scen:"You want a later bedtime or more screen time. Parents say \"No\" immediately.", brain:"Resistance Mode! But fighting makes them stricter. Time for 'Negotiation Mode'.", tips:["Proposal: 'If I finish homework by 8pm all week, can I have 30 mins extra on Friday?'","Responsibility: Show you can control yourself first."]},
+            {id:47, level:3, category:"Family", emoji:"🌿", title:"Broken Promises", scen:"Dad promised to take you to the theme park but cancelled due to work. You feel betrayed.", brain:"Expectation failed = Pain. Adults mess up too. It sucks, but it happens.", tips:["Express: 'I was really looking forward to it. I'm sad.'","Compensate: 'Can we reschedule? And promise no changes this time?'"]},
+            {id:48, level:3, category:"Family", emoji:"🌿", title:"Privacy Please", scen:"You are in your room with the door closed. Parents barge in without knocking.", brain:"You are growing up and need space. Parents are just used to taking care of you.", tips:["Rule: 'I just want quiet time. Please knock first.'","Check-in: Show them what you're doing sometimes so they worry less."]},
+            {id:49, level:3, category:"Family", emoji:"🌿", title:"Lying to Cover Up", scen:"You failed a test or broke something expensive. You are tempted to hide it or lie.", brain:"Lying is a loan with high interest. You pay with your 'Trust Credit'.", tips:["Think Ahead: Trouble now vs. No trust later.","Confess: 'I messed up. I'm scared to tell you, but I won't lie.'"]},
+            {id:50, level:3, category:"Family", emoji:"🌿", title:"Emotional Blackmail", scen:"You want an expensive gift. When parents refuse, you say, \"You don't love me!\"", brain:"Using love as a weapon hurts people. It works, but at a high cost.", tips:["Love != Money: Not buying doesn't mean not loving.","Earn It: 'I really want it. Can I earn money to help pay for it?'"]},
+            {id:51, level:3, category:"Emotion", emoji:"🔮", title:"Perfectionism", scen:"You got 98/100 on a test, but you obsess over the one mistake. You feel like a failure.", brain:"Perfectionism Trap. Perfect != Worthy. Progress > Perfection.", tips:["Celebrate: 98 is amazing! Clap for yourself.","Embrace Errors: The mistake is a clue to get even smarter."]},
+            {id:52, level:3, category:"Emotion", emoji:"🔮", title:"Talent Envy", scen:"A classmate is amazing at piano. Watching them shine, you feel you have no talent.", brain:"Brain has 'Black & White Glasses'. You see their light, but miss your own.", tips:["Your Light: What are you good at? Listening? Drawing?","Ask: 'How long did you practice?' Effort makes talent."]},
+            {id:53, level:3, category:"Emotion", emoji:"🔮", title:"Body Image", scen:"Looking in the mirror, you think you don't look good. You don't like how you look.", brain:"Appearance matters now. But don't let TV fool you. Your body is your vehicle; function > looks.", tips:["Thank You Body: Legs run, hands draw. Your body works hard for you.","Confidence: The most beautiful thing is a confident smile."]},
+            {id:54, level:3, category:"Emotion", emoji:"🔮", title:"Group Work Frustration", scen:"Group project time. No one helps, and you do all the work. You are furious!", brain:"Leadership Training! Anger won't help. Task delegation will.", tips:["Assign Tasks: 'A draws, B writes'. Be specific.","Ask/Report: Ask for help. If they refuse, tell the teacher calmly."]},
+            {id:55, level:3, category:"Emotion", emoji:"🔮", title:"Anxiety & Stress", scen:"Big test tomorrow. You lie in bed, mind racing, unable to sleep.", brain:"Brain is in 'Battle Mode'. Worrying about sleep makes it worse.", tips:["4-7-8 Breathing: In 4, Hold 7, Out 8. Force 'Relax Mode'.","Brain Dump: Write worries down. 'I'll deal with this tomorrow.'"]},
+            {id:56, level:3, category:"Safety", emoji:"🛡️", title:"Cyberbullying", scen:"Someone sends mean messages about you in a group chat or edits your photo.", brain:"Bullies want reaction. If you get mad, they win.", tips:["Screenshot: Don't delete! Save evidence.","Block & Tell: Block them. Tell an adult. Don't engage."]},
+            {id:57, level:3, category:"Safety", emoji:"🛡️", title:"Online Scams", scen:"You see a link: \"Click for Free Game Skins/Robux\" or \"You won an iPhone!\"", brain:"Greed Trap! Nothing is free. They want your password or money.", tips:["Stop: Why would a stranger give you free stuff?","Verify: Show an adult before clicking. They know scams."]},
+            {id:58, level:3, category:"Safety", emoji:"🛡️", title:"Home Alone", scen:"Parents are out. Someone rings the doorbell: \"Delivery! Open the door please.\"", brain:"Bad guys pretend to be workers. The door is your shield.", tips:["Yell Through Door: 'Leave it there!' Don't open.","Pretend: Yell 'Dad, someone is here!' even if alone."]},
+            {id:59, level:3, category:"Safety", emoji:"🛡️", title:"Uncomfortable Authority", scen:"A teacher or coach touches you too much or acts weirdly, making you feel creepy.", brain:"Authority Pressure. Trust your gut. If it feels weird, it IS weird.", tips:["Trust Gut: It's okay to say no if you feel uncomfortable.","Tell Parents: Parents protect you, even from teachers/coaches."]},
+            {id:60, level:3, category:"Safety", emoji:"🛡️", title:"Transport Mishap", scen:"You missed your stop on the bus/train because you were distracted.", brain:"Lost Panic! Don't wander off when scared.", tips:["Ask Staff: Ask the driver/station staff for help.","Safe Spot: Find a convenience store, call parents, and wait there."]}
+        ];
+
+        // --- 2. State Management ---
+        const LS_KEY = "thinkingCardsData_v18_en"; 
+        let currentLevel = 1;
+        let gameState = {
+            drawnIds: [],
+            collection: {} 
+        };
+
+        let currentCardId = null;
+        let selectedMood = "😌"; 
+        let historySelectedMood = ""; 
+        let feedbackRating = 0;
+
+        const levelRewards = {
+            1: { theme: "balloon", emoji: "🎈", title: "Little Thinker", childMsg: "Wow! Awesome! 🎉<br>You gathered all your courage. Your brain muscles are getting stronger!<br>You've learned to stop and think when facing problems!", parentMsg: "Congratulations! You've taken the first step in emotional resilience with your child. These seeds will grow." },
+            2: { theme: "star", emoji: "✨", title: "Emotion Detective", childMsg: "Amazing! ✨<br>You are a problem-solving pro!<br>Even in tricky situations, you can find great solutions like a detective!", parentMsg: "This isn't easy. Watching your child learn communication through conflict is the greatest reward. Give yourself a hand!" },
+            3: { theme: "firework", emoji: "🎆", title: "Brain Master", childMsg: "Incredible! 🎆<br>You are now a 'Brain Master'!<br>You've learned to turn 'Oh No' into 'I Can'. Nothing can stop you!", parentMsg: "Thank you for your patience and persistence. These 60 conversations will be a treasure of resilience for your child's life." }
+        };
+        
+        // --- 3. Initialization ---
+        function init() {
+            const saved = localStorage.getItem(LS_KEY);
+            if (saved) {
+                gameState = JSON.parse(saved);
+            }
+            
+            document.getElementById('note-date').valueAsDate = new Date();
+            currentLevel = parseInt(document.getElementById('level-select').value);
+            updateLevelColors();
+            renderBinder();
+            updateProgress();
+            renderBadges();
+        }
+
+        function updateLevelColors() {
+            const root = document.documentElement;
+            if(currentLevel === 1) root.style.setProperty('--level-color', '#ffcb05'); // Yellow
+            else if(currentLevel === 2) root.style.setProperty('--level-color', '#009688'); // Teal
+            else if(currentLevel === 3) root.style.setProperty('--level-color', '#9c27b0'); // Purple
+        }
+
+        function changeLevel(val) {
+            currentLevel = parseInt(val);
+            updateLevelColors();
+            document.getElementById('deck-container').style.display = 'flex';
+            document.getElementById('active-card').style.display = 'none';
+            document.getElementById('completion-message').style.display = 'none';
+            renderBinder();
+            updateProgress();
+            
+            const levelCardIds = getLevelCardIds(currentLevel);
+            const drawnCount = levelCardIds.filter(id => gameState.drawnIds.includes(id)).length;
+            if (drawnCount >= levelCardIds.length && levelCardIds.length > 0) {
+                showCompletion();
+            }
+        }
+
+        function getLevelCardIds(lvl) { return cardsData.filter(c => c.level === lvl).map(c => c.id); }
+
+        function updateProgress() {
+            const levelCardIds = getLevelCardIds(currentLevel);
+            const drawnCount = levelCardIds.filter(id => gameState.drawnIds.includes(id)).length;
+            document.getElementById('progress-text').innerText = `${drawnCount} / ${levelCardIds.length}`;
+        }
+        
+        function renderBadges() {
+            const container = document.getElementById('badges-container');
+            container.innerHTML = '';
+            
+            const badgesMeta = [
+                { lvl: 1, emoji: '🎈', title: 'Level 1: Little Thinker' },
+                { lvl: 2, emoji: '✨', title: 'Level 2: Emotion Detective' },
+                { lvl: 3, emoji: '🎆', title: 'Level 3: Brain Master' }
+            ];
+            
+            badgesMeta.forEach(b => {
+                const cardIds = getLevelCardIds(b.lvl);
+                const isComplete = cardIds.length > 0 && cardIds.every(id => gameState.drawnIds.includes(id));
+                const badgeEl = document.createElement('span');
+                badgeEl.className = isComplete ? 'badge unlocked' : 'badge';
+                badgeEl.innerText = b.emoji;
+                badgeEl.title = b.title;
+                container.appendChild(badgeEl);
+            });
+        }
+
+        // --- 4. Core Logic ---
+        function drawCard() {
+            const available = cardsData.filter(c => c.level === currentLevel && !gameState.drawnIds.includes(c.id));
+            
+            if (available.length === 0) {
+                showCompletion();
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * available.length);
+            const card = available[randomIndex];
+            currentCardId = card.id;
+
+            document.getElementById('deck-container').style.display = 'none';
+            const wrapper = document.getElementById('active-card');
+            wrapper.style.display = 'block';
+            wrapper.classList.remove('flipped'); 
+
+            // Fill Content
+            document.getElementById('card-type').innerText = card.category;
+            document.getElementById('card-image').innerText = card.emoji;
+            document.getElementById('card-title').innerText = card.title;
+            document.getElementById('card-cat-icon').innerText = card.emoji; 
+            document.getElementById('card-scen').innerText = card.scen;
+            document.getElementById('card-level').innerText = "Lv." + card.level;
+
+            document.getElementById('guide-brain').innerText = card.brain;
+            
+            const tipsList = document.getElementById('guide-tips');
+            tipsList.innerHTML = "";
+            card.tips.forEach(tip => {
+                const li = document.createElement('li');
+                li.innerText = tip;
+                tipsList.appendChild(li);
+            });
+
+            resetMoodSelection();
+            document.getElementById('note-text').value = "";
+            document.getElementById('front-stress-slider').value = 5;
+            document.getElementById('stress-val-display').innerText = 5;
+        }
+
+        function flipCard() {
+            const wrapper = document.getElementById('active-card');
+            wrapper.classList.toggle('flipped');
+            if(wrapper.classList.contains('flipped')) {
+                const guideSection = document.querySelector('.guide-section');
+                if(guideSection) guideSection.scrollTop = 0;
+            }
+        }
+
+        function selectMood(el, moodVal) {
+            document.querySelectorAll('#mood-options .mood-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedMood = moodVal;
+        }
+
+        function resetMoodSelection() {
+            document.querySelectorAll('#mood-options .mood-option').forEach(opt => opt.classList.remove('selected'));
+            selectedMood = ""; 
+        }
+
+        function saveCard() {
+            if (!currentCardId) return;
+            if (!selectedMood) selectedMood = "😌"; 
+
+            const stressVal = document.getElementById('front-stress-slider').value;
+            const noteData = {
+                date: document.getElementById('note-date').value,
+                stress: stressVal,
+                mood: selectedMood,
+                text: document.getElementById('note-text').value
+            };
+
+            if (!gameState.drawnIds.includes(currentCardId)) {
+                gameState.drawnIds.push(currentCardId);
+            }
+            gameState.collection[currentCardId] = noteData;
+
+            localStorage.setItem(LS_KEY, JSON.stringify(gameState));
+
+            showToast();
+            renderBinder();
+            updateProgress();
+            renderBadges();
+
+            document.getElementById('active-card').style.display = 'none';
+            
+            checkLevelCompletion(currentLevel);
+        }
+
+        function checkLevelCompletion(lvl) {
+            const levelCardIds = getLevelCardIds(lvl);
+            const drawnCount = levelCardIds.filter(id => gameState.drawnIds.includes(id)).length;
+            
+            if (drawnCount >= levelCardIds.length) {
+                showCompletion();
+                showRewardModal(lvl); 
+            } else {
+                document.getElementById('deck-container').style.display = 'flex';
+            }
+        }
+
+        function showCompletion() {
+            document.getElementById('deck-container').style.display = 'none';
+            document.getElementById('completion-message').style.display = 'block';
+        }
+
+        function showRewardModal(lvl) {
+            const rewardData = levelRewards[lvl];
+            if(!rewardData) return;
+
+            const contentHTML = `
+                <div class="modal-close-btn" onclick="document.getElementById('reward-modal').style.display='none'">×</div>
+                <span class="reward-emoji">${rewardData.emoji}</span>
+                <div class="reward-title">${rewardData.title}</div>
+                
+                <div class="reward-message-box">
+                    <span class="reward-label">To Kid:</span>
+                    <div class="reward-text">${rewardData.childMsg}</div>
+                </div>
+                
+                <div class="reward-message-box" style="border-left-color:#e94e57;">
+                    <span class="reward-label">To Parent:</span>
+                    <div class="reward-text">${rewardData.parentMsg}</div>
+                </div>
+            `;
+            
+            document.getElementById('reward-content').innerHTML = contentHTML;
+            const rootStyle = getComputedStyle(document.documentElement);
+            document.getElementById('reward-content').style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--level-color');
+            document.getElementById('reward-modal').style.display = 'flex';
+        }
+
+        function renderBinder() {
+            const grid = document.getElementById('binder-grid');
+            grid.innerHTML = "";
+            const levelCards = cardsData.filter(c => c.level === currentLevel);
+
+            levelCards.forEach(card => {
+                const slot = document.createElement('div');
+                slot.className = 'binder-slot';
+
+                if (gameState.drawnIds.includes(card.id)) {
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'binder-card';
+                    cardDiv.innerHTML = `
+                        <div class="binder-check">✔</div>
+                        <div class="binder-emoji">${card.emoji}</div>
+                        <div>${card.title}</div>
+                    `;
+                    cardDiv.onclick = () => viewCardHistory(card.id);
+                    slot.appendChild(cardDiv);
+                } else {
+                    slot.innerText = "?";
+                    slot.style.color = "#aaa";
+                }
+                grid.appendChild(slot);
+            });
+        }
+
+        // --- History Modal ---
+        function viewCardHistory(id) {
+            const card = cardsData.find(c => c.id === id);
+            const userNote = gameState.collection[id];
+            historySelectedMood = userNote.mood; 
+
+            const tipsHtml = card.tips.map(t => `<li>${t}</li>`).join('');
+
+            const moodOptionsHtml = ['😌', '😄', '😢', '😠', '😨', '😒', '🤯'].map(emoji => {
+                const labels = {'😌':'Calm', '😄':'Happy', '😢':'Sad', '😠':'Angry', '😨':'Scared', '😒':'Jealous', '🤯':'Meltdown'};
+                const isSelected = emoji === userNote.mood ? 'selected' : '';
+                return `<div class="mood-option ${isSelected}" onclick="selectHistoryMood(this, '${emoji}')">${emoji}<div class="mood-label">${labels[emoji]}</div></div>`;
+            }).join('');
+
+            const html = `
+                <div class="history-card-wrapper">
+                    <div class="modal-close-btn" onclick="document.getElementById('view-modal').style.display='none'">×</div>
+                    <div class="history-card-header">
+                        <span>${card.category} | ${card.title}</span>
+                        <span class="level-badge">Lv.${card.level}</span>
+                    </div>
+                    <div class="history-card-body">
+                        <div class="history-left-col">
+                            <div style="font-size:3rem; text-align:center; margin-bottom:10px;">${card.emoji}</div>
+                            <div class="scenario-text"><p><strong>Scenario:</strong> ${card.scen}</p></div>
+                            <hr style="border:0; border-top:1px dashed #ccc; margin:15px 0;">
+                            <div class="guide-section" style="padding:0;">
+                                <strong style="color:var(--primary-blue);">🧠 Brain Check:</strong>
+                                <p style="margin-top:5px; font-size:0.9rem;">${card.brain}</p>
+                                <strong style="color:var(--primary-blue); margin-top:10px; display:block;">💡 Tips:</strong>
+                                <ul style="padding-left:20px; font-size:0.9rem;">${tipsHtml}</ul>
+                            </div>
+                        </div>
+                        <div class="history-right-col">
+                            <div class="section-title" style="font-size:0.9rem; margin-bottom:15px;">📝 History</div>
+                            <div style="background:white; padding:10px; border-radius:8px; margin-bottom:15px; border:1px solid #ddd;">
+                                <div style="color:#d32f2f; font-size:0.9rem; margin-bottom:5px;"><strong>🔥 Stress Level:</strong> ${userNote.stress || 'N/A'} / 10</div>
+                            </div>
+                            <div class="form-row"><label style="font-size:0.85rem; color:#555;">Date:</label><input type="date" id="history-note-date" value="${userNote.date}"></div>
+                            <div style="font-size:0.8rem; margin-bottom:5px; color:#555;">Emotion:</div>
+                            <div class="mood-selector" id="history-mood-options">${moodOptionsHtml}</div>
+                            <div style="font-size:0.8rem; margin-bottom:5px; margin-top:10px; color:#555;">Response & Notes:</div>
+                            <textarea id="history-note-text" style="height:100px;" placeholder="Edit notes...">${userNote.text || ""}</textarea>
+                            <button class="btn-save" onclick="updateHistory(${id})" style="background:#2e7d32; margin-top:15px;">💾 Update</button>
+                        </div>
+                    </div>
+                    <div class="history-brand-footer">Brainymama</div>
+                </div>
+            `;
+            
+            document.getElementById('modal-content-area').innerHTML = html;
+            document.getElementById('view-modal').style.display = 'flex';
+        }
+
+        function selectHistoryMood(el, moodVal) {
+            document.querySelectorAll('#history-mood-options .mood-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            historySelectedMood = moodVal;
+        }
+
+        function updateHistory(id) {
+            const date = document.getElementById('history-note-date').value;
+            const text = document.getElementById('history-note-text').value;
+            const oldData = gameState.collection[id];
+            
+            const updatedData = { ...oldData, date: date, mood: historySelectedMood, text: text };
+
+            gameState.collection[id] = updatedData;
+            localStorage.setItem(LS_KEY, JSON.stringify(gameState));
+            showToast();
+        }
+
+        function closeModal(e) {
+            if (e.target.id === 'view-modal') {
+                document.getElementById('view-modal').style.display = 'none';
+            }
+        }
+
+        function showToast(message) {
+            const t = document.getElementById('toast');
+            if (message) t.innerText = message;
+            else t.innerText = "Saved!";
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function exportDataCSV() {
+            const headers = ["Level", "Category", "Title", "Scenario", "Date", "Stress", "Mood", "Notes"];
+            const rows = [];
+            rows.push(headers.join(","));
+
+            gameState.drawnIds.sort((a,b)=>a-b).forEach(id => {
+                const card = cardsData.find(c => c.id === id);
+                const note = gameState.collection[id];
+                if (card && note) {
+                    const cleanNote = (note.text || "").replace(/"/g, '""');
+                    const cleanScen = (card.scen || "").replace(/"/g, '""');
+                    const row = [card.level, card.category, `"${card.title}"`, `"${cleanScen}"`, note.date, note.stress || "", note.mood, `"${cleanNote}"`];
+                    rows.push(row.join(","));
+                }
+            });
+
+            const csvContent = "\uFEFF" + rows.join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", url);
+            downloadAnchorNode.setAttribute("download", "Brainymama_FlipIt_Data_EN.csv");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function openResetModal() {
+            const levelText = document.getElementById('level-select').options[document.getElementById('level-select').selectedIndex].text;
+            document.getElementById('reset-msg-text').innerText = `You are about to delete all records for ${levelText}.\nThis cannot be undone!`;
+            document.getElementById('reset-modal').style.display = 'flex';
+        }
+
+        function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; }
+
+        function confirmReset() {
+            const levelCardIds = getLevelCardIds(currentLevel);
+            gameState.drawnIds = gameState.drawnIds.filter(id => !levelCardIds.includes(id));
+            levelCardIds.forEach(id => { delete gameState.collection[id]; });
+
+            localStorage.setItem(LS_KEY, JSON.stringify(gameState));
+            
+            closeResetModal();
+            changeLevel(currentLevel);
+            renderBadges();
+            showToast();
+        }
+
+        function shareApp() {
+            const url = "https://github.com/wantingyeh";
+            
+            // Modern Clipboard API approach first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast("Link copied! Paste to share with friends.");
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(url);
+                });
+            } else {
+                fallbackCopyTextToClipboard(url);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Ensure it's not visible but part of DOM
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            textArea.style.top = "0";
+            document.body.appendChild(textArea);
+            
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                showToast("Link copied! Paste to share with friends.");
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showToast("Copy failed, please copy URL manually!");
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        // --- Show Info Modal (Privacy, License, Disclaimer) ---
+        function showInfo(type) {
+            const content = document.getElementById('info-body');
+            let html = '';
+            
+            if (type === 'privacy') {
+                html = `
+                    <h3>Privacy Policy</h3>
+                    <p><strong>Your data is absolutely safe.</strong></p>
+                    <p>This App uses "Local Storage" technology. This means:</p>
+                    <ul>
+                        <li>All records (draw progress, journals, mood scores) are stored ONLY in your current device's browser.</li>
+                        <li>We have <strong>no backend database</strong>, so your data will never be uploaded to any cloud server or accessed by third parties.</li>
+                    </ul>
+                    <p><strong>How to backup or transfer?</strong><br>If you clear browser cache or change devices, data will be lost. We recommend using the "Export Data" function regularly to save records as a CSV file.</p>
+                `;
+            } else if (type === 'license') {
+                html = `
+                    <h3>Terms of Use</h3>
+                    <p>This App is a free parenting resource designed to promote children's resilience and problem-solving skills.</p>
+                    <ul>
+                        <li><strong>Sharing:</strong> Parents, teachers, and educators are welcome to download, use, and share for non-commercial purposes.</li>
+                        <li><strong>Attribution:</strong> When citing or reposting, please credit: <strong>Brainymama</strong>.</li>
+                        <li><strong>No Commercial Use:</strong> Do not use this App for commercial sales, paid courses, or modify and republish without written permission.</li>
+                    </ul>
+                `;
+            } else if (type === 'disclaimer') {
+                html = `
+                    <h3>Disclaimer</h3>
+                    <p>The content and suggestions in this App are for educational support and reference only, and do not represent professional medical diagnosis or psychological counseling.</p>
+                    <p>If your child shows severe emotional distress, persistent behavioral problems, or trauma reactions, please seek assistance from a professional physician or clinical psychologist.</p>
+                `;
+            }
+            
+            content.innerHTML = html;
+            document.getElementById('info-modal').style.display = 'flex';
+        }
+
+        // --- Feedback Modal Functions ---
+        function openFeedbackModal() {
+            const content = document.getElementById('info-body');
+            feedbackRating = 0; // reset
+            
+            let html = `
+                <h3>Message to Brainymama</h3>
+                <p>Enjoying "Flip It! Kids"? We need your support to go further.</p>
+                <p>Whether it's a 5-star rating, feature wish, or collaboration request, leave a message here!</p>
+                
+                <div class="feedback-stars">
+                    <span class="star-icon" onclick="rateStar(1)">★</span>
+                    <span class="star-icon" onclick="rateStar(2)">★</span>
+                    <span class="star-icon" onclick="rateStar(3)">★</span>
+                    <span class="star-icon" onclick="rateStar(4)">★</span>
+                    <span class="star-icon" onclick="rateStar(5)">★</span>
+                </div>
+                
+                <textarea id="feedback-text" class="feedback-textarea" placeholder="Enter your thoughts, suggestions, or collaboration requests..."></textarea>
+                
+                <div class="feedback-divider"></div>
+                
+                <input type="text" id="feedback-name" class="feedback-input" placeholder="Your Name (Optional)">
+                <input type="email" id="feedback-email" class="feedback-input" placeholder="Your Email (Optional, for reply)">
+                
+                <button class="btn-save" id="btn-submit-feedback" onclick="sendFeedbackAjax()">Send</button>
+            `;
+            
+            content.innerHTML = html;
+            document.getElementById('info-modal').style.display = 'flex';
+        }
+
+        function rateStar(n) {
+            feedbackRating = n;
+            const stars = document.querySelectorAll('.star-icon');
+            stars.forEach((star, index) => {
+                if (index < n) star.classList.add('active');
+                else star.classList.remove('active');
+            });
+        }
+
+        function sendFeedbackAjax() {
+            const text = document.getElementById('feedback-text').value;
+            const name = document.getElementById('feedback-name').value;
+            const email = document.getElementById('feedback-email').value;
+            
+            if (feedbackRating === 0 && !text) {
+                alert("Please provide a rating or enter a message!");
+                return;
+            }
+            
+            const btn = document.getElementById('btn-submit-feedback');
+            btn.innerText = "Sending...";
+            btn.disabled = true;
+            btn.style.opacity = "0.7";
+
+            // Using Formsubmit.co AJAX
+            fetch("https://formsubmit.co/ajax/mumstot.service@gmail.com", {
+                method: "POST",
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    rating: feedbackRating + " Stars",
+                    message: text,
+                    name: name || "Anonymous",
+                    email: email || "Not Provided",
+                    _subject: "[Flip It! Kids - EN] New Feedback"
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                btn.innerText = "✅ Sent! Thank you";
+                btn.style.background = "#4CAF50";
+                setTimeout(() => {
+                    document.getElementById('info-modal').style.display = 'none';
+                }, 1500);
+            })
+            .catch(error => {
+                console.log(error);
+                alert("Failed to send. Please try again later or contact us directly.");
+                btn.innerText = "Send";
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            });
+        }
+        
+        init();
+    </script>
+</body>
+</html>

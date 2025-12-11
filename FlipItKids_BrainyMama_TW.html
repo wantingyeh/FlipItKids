@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>翻轉吧！小腦袋 - 兒童情緒韌性練習</title>
+    <style>
+        :root {
+            --card-width: 340px;
+            --card-height: 680px;
+            --level-color: #ffcb05; /* Default Level 1 Color */
+            --primary-blue: #2a75bb;
+            --bg-color: #f0f2f5;
+            --border-width: 10px;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            color: #333;
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .logo-title-container { display: flex; align-items: center; }
+        .logo-img { height: 60px; margin-right: 15px; }
+
+        h1 { margin: 0; font-size: 1.4rem; color: var(--primary-blue); line-height: 1.2; }
+        h1 small { display: block; font-size: 0.6em; color: #666; font-weight: normal; margin-top: 4px; }
+
+        /* --- Intro Section --- */
+        .app-intro-container {
+            width: 100%; max-width: 800px; margin-bottom: 20px;
+            background: #fff; border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden;
+        }
+        .intro-header {
+            padding: 15px 20px; background: #fff; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid transparent; transition: all 0.3s;
+        }
+        .intro-header:hover { background: #f9f9f9; }
+        .intro-header h3 { margin: 0; color: var(--primary-blue); font-size: 1.1rem; }
+        .toggle-icon { font-size: 1.2rem; color: #888; transition: transform 0.3s; }
+        
+        .app-intro-container.open .intro-header { border-bottom: 1px solid #eee; }
+        .app-intro-container.open .toggle-icon { transform: rotate(180deg); }
+
+        .intro-content {
+            max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out;
+            padding: 0 20px; font-size: 0.95rem; color: #333; line-height: 1.8;
+        }
+        .app-intro-container.open .intro-content { max-height: 800px; padding: 20px 25px; }
+        .intro-content p { margin: 0 0 15px 0; }
+        .highlight-text { color: #e94e57; font-weight: bold; background: #fff0f0; padding: 0 4px; border-radius: 4px; }
+        
+        /* --- Controls --- */
+        .controls { display: flex; align-items: center; gap: 10px; }
+        select#level-select {
+            padding: 5px 10px; border-radius: 6px; border: 1px solid #ccc;
+            font-size: 1rem; color: #333; background: #fff; cursor: pointer; font-weight: bold;
+        }
+
+        button {
+            background: #fff; border: 1px solid #ccc; padding: 8px 15px;
+            border-radius: 6px; cursor: pointer; font-size: 0.9rem;
+            font-weight: bold; line-height: 1.1; transition: all 0.2s;
+        }
+        button:hover { background: #f0f0f0; transform: translateY(-1px); }
+        .btn-reset { color: #d32f2f; border-color: #ffcccc; }
+        .btn-export { color: #2e7d32; border-color: #ccffcc; }
+
+        /* --- Main Game Stage --- */
+        #game-stage {
+            perspective: 1000px; margin-bottom: 40px; display: flex;
+            justify-content: center; align-items: center; flex-direction: column;
+            min-height: 700px;
+        }
+
+        /* Deck */
+        #deck-container { cursor: pointer; transition: transform 0.2s; }
+        #deck-container:hover { transform: scale(1.05); }
+        .deck-card {
+            width: var(--card-width); height: var(--card-height);
+            background: linear-gradient(135deg, #2a75bb 0%, #3c5aa6 100%);
+            border-radius: 15px; border: 8px solid var(--level-color);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative;
+        }
+        .brain-icon-large {
+            width: 140px; height: 140px; background: white; border-radius: 50%;
+            border: 6px solid #fff; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 20px;
+        }
+        .deck-label { color: white; text-align: center; font-weight: bold; font-size: 1.5rem; text-shadow: 1px 1px 2px black; }
+        .deck-label small { display: block; font-size: 1rem; margin-top: 5px; opacity: 0.9; }
+
+        /* Card Structure */
+        .card-wrapper {
+            width: var(--card-width); height: var(--card-height);
+            position: relative; transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: none;
+        }
+        .card-wrapper.flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden; border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            background: white; overflow: hidden;
+            border: var(--border-width) solid var(--level-color);
+            box-sizing: border-box; display: flex; flex-direction: column;
+        }
+        .card-front { pointer-events: auto; }
+        .card-back { transform: rotateY(180deg); background: #fdfdfd; pointer-events: none; }
+        .card-wrapper.flipped .card-front { pointer-events: none; }
+        .card-wrapper.flipped .card-back { pointer-events: auto; }
+
+        /* Card Components */
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 15px; background: #f0f0f0; border-bottom: 2px solid #ddd;
+            font-size: 0.9rem; font-weight: bold; color: #444; flex-shrink: 0;
+        }
+        .level-badge { color: #d32f2f; font-weight: 800; } 
+
+        .card-image-box {
+            height: 140px; margin: 10px; background: #eee;
+            border: 3px solid #ccc; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 4.5rem; position: relative; flex-shrink: 0; border-radius: 8px;
+        }
+
+        .card-content-scroll {
+            flex: 1; overflow-y: auto; padding: 0 15px;
+            display: flex; flex-direction: column;
+        }
+
+        .card-title-bar {
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            padding: 8px 12px; border-radius: 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-shrink: 0;
+        }
+        .move-name { font-weight: bold; font-size: 1.1rem; line-height: 1.2; color: #222; }
+        
+        .scenario-text { font-size: 1rem; line-height: 1.6; color: #333; margin-bottom: 10px; }
+
+        .prompt-text {
+            background: #e8f4fd; border-left: 4px solid var(--primary-blue);
+            padding: 12px; margin: 10px 0 5px 0; font-size: 1rem;
+            color: #0d47a1; border-radius: 0 4px 4px 0; font-weight: bold;
+        }
+
+        .card-bottom-fixed {
+            padding: 10px 15px 5px 15px; background: white; border-top: 1px dashed #eee;
+            flex-shrink: 0; display: flex; flex-direction: column; align-items: center; z-index: 20;
+        }
+
+        .stress-slider-container { width: 100%; text-align: center; margin-bottom: 10px; }
+        input[type=range] {
+            width: 90%; height: 8px; border-radius: 5px;
+            background: linear-gradient(90deg, #4CAF50, #FFEB3B, #F44336);
+            outline: none; -webkit-appearance: none; margin-top: 8px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: #fff; border: 3px solid #333; cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Unified Outline Button */
+        .btn-outline {
+            background: #fff; border: 2px solid var(--level-color); color: #555;
+            width: 100%; padding: 10px; border-radius: 25px; font-size: 1rem; 
+            font-weight: bold; cursor: pointer; transition: all 0.2s;
+            margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .btn-outline:hover { background: var(--level-color); color: white; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+        .card-brand-footer {
+            height: 36px; background: var(--level-color);
+            color: #444; font-size: 0.65rem; font-weight: bold;
+            display: flex; justify-content: center; align-items: center;
+            flex-shrink: 0; letter-spacing: 1px;
+        }
+
+        .guide-section { padding: 15px; flex: 1; overflow-y: auto; background: #fcfcfc; }
+        .brain-check, .tips-box { margin-bottom: 15px; }
+        .section-title {
+            font-weight: bold; color: var(--primary-blue); margin-bottom: 8px;
+            display: flex; align-items: baseline; gap: 5px; font-size: 1rem;
+            border-bottom: 1px solid #eee; padding-bottom: 5px;
+        }
+        .guide-text { font-size: 0.95rem; color: #333; margin: 0; line-height: 1.6; }
+        .tips-list { padding-left: 20px; margin: 0; }
+        .tips-list li { margin-bottom: 8px; font-size: 0.95rem; color: #333; line-height: 1.5; }
+
+        .trainer-note-section { background: #eef4fa; padding: 12px; border-top: 2px solid #ccc; flex-shrink: 0; padding-bottom: 10px; }
+        .form-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; align-items: center;}
+        
+        .mood-selector {
+            display: flex; justify-content: space-between; width: 100%;
+            margin-bottom: 8px; background: white; padding: 5px;
+            border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;
+        }
+        .mood-option {
+            display: flex; flex-direction: column; align-items: center; cursor: pointer;
+            opacity: 0.4; transition: all 0.2s; font-size: 1.2rem; flex: 1;
+        }
+        .mood-option:hover { opacity: 0.7; transform: scale(1.1); }
+        .mood-option.selected {
+            opacity: 1; transform: scale(1.2); font-weight: bold; text-shadow: 0 0 10px gold;
+        }
+        .mood-label { font-size: 0.7rem; margin-top: 2px; }
+
+        textarea {
+            width: 100%; height: 60px; border: 1px solid #ccc; border-radius: 4px;
+            padding: 8px; resize: none; font-family: inherit; box-sizing: border-box;
+        }
+        .btn-save { 
+            width: 100%; border: none; padding: 10px; border-radius: 4px;
+            cursor: pointer; font-weight: bold; margin-top: 8px;
+            background: var(--primary-blue); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-save:hover { background: #1e5c99; }
+
+        /* --- Binder --- */
+        #binder-section { width: 100%; max-width: 900px; margin-top: 30px; }
+        .binder-header-row {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 15px;
+            flex-wrap: wrap; gap: 10px;
+        }
+        .binder-header-row h2 { margin: 0; color: #555; font-size: 1.2rem; }
+        
+        .badges-container { display: flex; gap: 10px; }
+        .badge { 
+            font-size: 1.5rem; filter: grayscale(100%); opacity: 0.5; transition: all 0.3s; cursor: help; position: relative;
+        }
+        .badge.unlocked { filter: grayscale(0%); opacity: 1; transform: scale(1.1); cursor: default; }
+        .badge::after {
+            content: '🔒'; position: absolute; bottom: -2px; right: -5px; font-size: 0.8rem;
+        }
+        .badge.unlocked::after { content: ''; }
+        
+        .binder-grid {
+            display: grid; gap: 15px; padding: 10px; justify-content: center;
+            grid-template-columns: repeat(2, 1fr);
+        }
+        @media (min-width: 600px) { .binder-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 900px) { .binder-grid { grid-template-columns: repeat(5, 1fr); } }
+
+        .binder-slot {
+            width: 100%; aspect-ratio: 2.5 / 3.5; background: #e0e0e0;
+            border-radius: 8px; display: flex; justify-content: center; align-items: center;
+            cursor: default; position: relative; border: 2px dashed #aaa;
+        }
+        .binder-card {
+            width: 100%; height: 100%; border-radius: 8px; background: white;
+            border: 2px solid var(--level-color);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; font-size: 0.9rem;
+            text-align: center; cursor: pointer; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 5px; box-sizing: border-box;
+        }
+        .binder-card:hover { transform: scale(1.05); border-color: var(--primary-blue); }
+        .binder-emoji { font-size: 2rem; margin-bottom: 5px; }
+        .binder-check { position: absolute; top: 2px; right: 2px; color: green; background: white; border-radius: 50%; width: 20px; height: 20px; font-size: 14px; line-height: 20px; text-align: center;}
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .modal-close-btn {
+            position: absolute; top: -15px; right: -15px; width: 36px; height: 36px;
+            background: #333; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: bold; cursor: pointer; z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: 2px solid #fff;
+        }
+        
+        /* Text Modal (Privacy, License, Feedback) */
+        .text-modal-content {
+            background: white; padding: 30px; border-radius: 12px;
+            width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;
+            position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .text-modal-content h3 { color: var(--primary-blue); margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+        .text-modal-content p, .text-modal-content li { font-size: 0.95rem; line-height: 1.6; color: #444; }
+
+        /* Reset Modal */
+        .reset-modal-content {
+            background: white; padding: 25px; border-radius: 10px;
+            width: 90%; max-width: 400px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .reset-btns { margin-top: 20px; display: flex; justify-content: center; gap: 10px; }
+        .btn-confirm-reset { background: #d32f2f; color: white; padding: 8px 20px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;}
+        .btn-cancel-reset { background: #ccc; color: #333; padding: 8px 20px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;}
+
+        /* Reward Modal */
+        .reward-modal-content {
+            background: white; padding: 30px; border-radius: 20px;
+            width: 90%; max-width: 500px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            border: 4px solid var(--level-color);
+            position: relative; animation: popIn 0.5s ease-out;
+        }
+        .reward-emoji { font-size: 4rem; margin-bottom: 10px; display: block; animation: bounce 2s infinite; }
+        .reward-title { font-size: 1.8rem; font-weight: bold; color: var(--primary-blue); margin-bottom: 20px; }
+        .reward-message-box { background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; border-left: 4px solid var(--primary-blue); }
+        .reward-label { font-size: 0.8rem; font-weight: bold; color: #666; margin-bottom: 3px; display: block;}
+
+        /* History Modal */
+        .history-card-wrapper {
+            position: relative; width: 95%; max-width: 800px; max-height: 90vh;
+            background: white; border: var(--border-width) solid var(--level-color);
+            border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; overflow: hidden;
+            animation: popIn 0.2s ease-out;
+        }
+        .history-card-header {
+            padding: 10px 15px; background: #f0f0f0; border-bottom: 2px solid #ddd;
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: bold; color: #444; flex-shrink: 0;
+        }
+        .history-card-body { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
+        .history-left-col { flex: 1; padding: 20px; overflow-y: auto; border-right: 1px dashed #ccc; min-width: 300px; }
+        .history-right-col { flex: 1; padding: 20px; overflow-y: auto; background: #fffcf0; min-width: 300px; }
+        .history-brand-footer {
+            height: 36px; background: var(--level-color); color: #444; font-size: 0.65rem; font-weight: bold;
+            display: flex; justify-content: center; align-items: center; flex-shrink: 0; letter-spacing: 1px;
+        }
+        @media (max-width: 700px) {
+            .history-card-body { flex-direction: column; }
+            .history-left-col { border-right: none; border-bottom: 1px dashed #ccc; min-width: auto; height: 50%;}
+            .history-right-col { min-width: auto; height: 50%; }
+        }
+
+        /* Animations & Toast */
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-20px);} 60% {transform: translateY(-10px);} }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8); color: white; padding: 12px 24px; border-radius: 30px;
+            opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 2000;
+            font-size: 0.95rem; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .toast.show { opacity: 1; }
+
+        /* Feedback Modal Styles */
+        .feedback-stars { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+        .star-icon { font-size: 2rem; cursor: pointer; color: #ddd; transition: color 0.2s; }
+        .star-icon.active { color: #ffd700; }
+        .feedback-textarea { width: 100%; height: 80px; border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-bottom: 10px; font-family: inherit; box-sizing: border-box; }
+        .feedback-input { width: 100%; height: 40px; border: 1px solid #ccc; border-radius: 8px; padding: 8px; margin-bottom: 10px; font-family: inherit; box-sizing: border-box; }
+        .feedback-divider { border-top: 1px dashed #eee; margin: 15px 0; width: 100%; }
+
+        /* Footer */
+        footer {
+            width: 100%; max-width: 800px; background: #fff; padding: 20px;
+            border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 30px;
+            color: #555; font-size: 0.9rem; line-height: 1.5; text-align: center;
+        }
+        .footer-credit {
+            margin-bottom: 15px; color: #444; font-weight: bold;
+        }
+        .footer-nav {
+            display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .footer-nav span {
+            cursor: pointer; color: #2a75bb; font-weight: bold; font-size: 0.9rem;
+        }
+        .footer-nav span:hover { text-decoration: underline; color: #e94e57; }
+        
+        .footer-social-links {
+            display: flex; justify-content: center; gap: 20px; margin: 15px 0; flex-wrap: wrap;
+        }
+        .footer-social-link {
+            display: flex; align-items: center; color: #e94e57; text-decoration: none;
+            font-weight: bold; font-size: 1rem; gap: 5px; cursor: pointer;
+        }
+        .footer-social-link:hover { color: #c0392b; text-decoration: none; }
+        .social-icon { width: 20px; height: 20px; fill: currentColor; }
+        
+        .copyright { margin-top: 10px; font-size: 0.8rem; color: #888; border-top: 1px solid #eee; padding-top: 15px; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-title-container">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgNTAwIj4KICA8cmVjdCB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgZmlsbD0iI2U4ZjEyNyIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNDUlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iJ0ZyZWRva2EnLCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNjAwIiBmb250LXNpemU9IjkwIiBmaWxsPSIjZTk0ZTU3IiBsZXR0ZXItc3BhY2luZz0iNSI+5aSn6IWm5aq95aq9PC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNzAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iJ0ZyZWRva2EnLCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNDAwIiBmb250LXNpemU9IjY1IiBmaWxsPSIjZTk0ZTU3IiBsZXR0ZXItc3BhY2luZz0iMyI+QnJhaW55IE1hbWE8L3RleHQ+Cjwvc3ZnPg==" alt="BrainyMama Logo" class="logo-img">
+            <h1>
+                翻轉吧！小腦袋
+                <small>Flip It! Kids</small>
+            </h1>
+        </div>
+        <div class="controls">
+            <select id="level-select" onchange="changeLevel(this.value)">
+                <option value="1">等級 1 (基礎)</option>
+                <option value="2">等級 2 (進階)</option>
+                <option value="3">等級 3 (高階)</option>
+            </select>
+            <span id="progress-text" style="font-size:0.9rem; color:#555; font-weight: bold;">0 / 20</span>
+            <button class="btn-reset" onclick="openResetModal()">↻ 重置</button>
+        </div>
+    </header>
+
+    <div class="app-intro-container open" id="intro-box">
+        <div class="intro-header" onclick="toggleIntro()">
+            <h3>把「糟糕了」變成「我有辦法」</h3>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="intro-content">
+            <p>遇到朋友不理人就崩潰？計畫被打亂就發脾氣？別擔心，這不是孩子的錯，是他們的大腦「前額葉」還在施工中！</p>
+            
+            <p>《翻轉吧！小腦袋》是一套專為小學低年級（6-9 歲）設計的<span class="highlight-text">「生活實戰模擬器」</span>。結合腦科學與兒童心理學專業，將抽象理論轉化為孩子能理解的生活挑戰。循序漸進鍛鍊大腦韌性，引導孩子建立成長型思維。</p>
+            
+            <p>🌟 <strong>如何幫助您的孩子？</strong><br>透過大腦媽媽設計的 「停 → 轉 → 解」 三步驟，我們將每一次的崩潰，都變成練習「大腦執行功能」的機會。</p>
+            
+            <p style="margin-top:10px; font-weight:bold; color:#2a75bb;">每天陪孩子抽1-3張卡牌，一起鍛鍊孩子的大腦韌性！</p>
+        </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div id="game-stage">
+        <!-- Message when done -->
+        <div id="completion-message" style="display:none; text-align: center;">
+            <h2>🎉 恭喜完成！</h2>
+            <p>你已經完成了這個等級的所有情境練習。</p>
+            <p>去下方的收藏冊複習你們的對話吧！</p>
+        </div>
+
+        <!-- The Deck -->
+        <div id="deck-container" onclick="drawCard()">
+            <div class="deck-card">
+                <div class="brain-icon-large">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#2a75bb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+                </div>
+                <div class="deck-label">
+                    點擊抽卡
+                    <small>Draw Card</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Active Card -->
+        <div class="card-wrapper" id="active-card">
+            <!-- Front -->
+            <div class="card-face card-front">
+                <div class="card-header">
+                    <span id="card-type">類別</span>
+                    <span class="level-badge" id="card-level">Lv.1</span>
+                </div>
+                <div class="card-image-box">
+                    <span id="card-image" style="font-size: 5rem;">🤔</span>
+                </div>
+                
+                <div class="card-content-scroll">
+                    <div class="card-title-bar">
+                        <span class="move-name" id="card-title">標題</span>
+                        <span id="card-cat-icon">🔥</span>
+                    </div>
+                    <div class="scenario-text" id="card-scen">
+                        中文情境...
+                    </div>
+                    
+                    <div class="prompt-text">
+                        想想看，該怎麼辦呢？
+                    </div>
+                </div>
+
+                <div class="card-bottom-fixed">
+                    <div class="stress-slider-container">
+                        <small style="font-size:0.8rem; color:#888;">
+                            壓力指數: <span id="stress-val-display" style="font-weight:bold; color:#d32f2f;">5</span>
+                        </small>
+                        <br>
+                        <input type="range" id="front-stress-slider" min="1" max="10" value="5" oninput="document.getElementById('stress-val-display').innerText=this.value">
+                    </div>
+                    <button class="btn-outline" onclick="flipCard()">翻轉看導航</button>
+                </div>
+
+                <div class="card-brand-footer">Brainymama</div>
+            </div>
+
+            <!-- Back -->
+            <div class="card-face card-back">
+                <div class="card-header" style="justify-content:center; background:#fffbe6; border-bottom:1px dashed #ccc;">
+                    <button class="btn-outline" onclick="flipCard()" style="margin:0; width:auto; padding: 5px 20px;">↻ 翻回正面</button>
+                </div>
+                <div class="guide-section">
+                    <div class="brain-check">
+                        <div class="section-title">🧠 大腦小知識</div>
+                        <p class="guide-text" id="guide-brain">內容...</p>
+                    </div>
+                    <div class="tips-box">
+                        <div class="section-title">💡 建議應對</div>
+                        <ul id="guide-tips" class="tips-list">
+                            <li>Tip 1</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="trainer-note-section">
+                    <div class="form-row">
+                        <strong style="color:var(--primary-blue);">📝 筆記區</strong>
+                        <input type="date" id="note-date">
+                    </div>
+                    
+                    <div class="mood-selector" id="mood-options">
+                        <div class="mood-option" onclick="selectMood(this, '😌')" data-val="😌">😌<div class="mood-label">平靜</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '😄')" data-val="😄">😄<div class="mood-label">開心</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '😢')" data-val="😢">😢<div class="mood-label">難過</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '😠')" data-val="😠">😠<div class="mood-label">憤怒</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '😨')" data-val="😨">😨<div class="mood-label">害怕</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '😒')" data-val="😒">😒<div class="mood-label">嫉妒</div></div>
+                        <div class="mood-option" onclick="selectMood(this, '🤯')" data-val="🤯">🤯<div class="mood-label">崩潰</div></div>
+                    </div>
+
+                    <textarea id="note-text" placeholder="記錄孩子的回應..."></textarea>
+                    <button class="btn-save" onclick="saveCard()">收錄至卡冊</button>
+                </div>
+
+                <div class="card-brand-footer">Brainymama</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Binder Section -->
+    <div id="binder-section">
+        <div class="binder-header-row">
+            <h2>🗂️ 思考卡冊</h2>
+            <div class="badges-container" id="badges-container">
+                <!-- Badges injected by JS -->
+            </div>
+            <button class="btn-export" onclick="exportDataCSV()">📥 匯出紀錄</button>
+        </div>
+        
+        <div class="binder-grid" id="binder-grid">
+            <!-- Slots generated by JS -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <!-- Social Links with Icons -->
+        <div class="footer-social-links">
+            <a href="https://www.facebook.com/brainymamaedu" target="_blank" class="footer-social-link">
+                <svg class="social-icon" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                大腦媽媽粉專
+            </a>
+            <a href="https://wantingyeh1988.wixsite.com/brainymama/about-me" target="_blank" class="footer-social-link">
+                <svg class="social-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                關於大腦媽媽
+            </a>
+            <a href="javascript:void(0)" onclick="shareApp()" class="footer-social-link">
+                <svg class="social-icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                分享給朋友
+            </a>
+        </div>
+
+        <div class="footer-credit">
+            策劃與監修：大腦媽媽（心理與腦科學專家 | 奧克蘭大學兒童心理學博士）
+        </div>
+
+        <div class="footer-nav">
+            <span onclick="showInfo('license')">[使用授權]</span>
+            <span onclick="showInfo('privacy')">[隱私權政策]</span>
+            <span onclick="showInfo('disclaimer')">[免責聲明]</span>
+            <span onclick="openFeedbackModal()">[給腦媽的一句話！]</span>
+        </div>
+
+        <div class="copyright">
+            © 2025 Brainymama. Designed with Gemini Vibe Coding
+        </div>
+    </footer>
+
+    <!-- View Modal (History) -->
+    <div class="modal-overlay" id="view-modal" onclick="closeModal(event)">
+        <div class="modal-content" id="modal-content-area"></div>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div class="modal-overlay" id="reset-modal" style="z-index: 2000;">
+        <div class="reset-modal-content">
+            <h3 style="color:#d32f2f; margin-top:0;">⚠️ 確定要重置嗎？</h3>
+            <p id="reset-msg-text" style="color:#555; line-height:1.5;"></p>
+            <div class="reset-btns">
+                <button class="btn-confirm-reset" onclick="confirmReset()">確定刪除</button>
+                <button class="btn-cancel-reset" onclick="closeResetModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reward Modal -->
+    <div class="modal-overlay" id="reward-modal" style="z-index: 3000;">
+        <div class="reward-modal-content" id="reward-content">
+            <!-- Content Injected via JS -->
+        </div>
+    </div>
+
+    <!-- Info Modal (Generic Text) -->
+    <div class="modal-overlay" id="info-modal" style="z-index: 2500;">
+        <div class="text-modal-content" id="info-content">
+            <div class="modal-close-btn" onclick="document.getElementById('info-modal').style.display='none'">×</div>
+            <div id="info-body"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">已儲存！</div>
+
+    <script>
+        // Collapsible Intro Logic
+        function toggleIntro() {
+            const container = document.getElementById('intro-box');
+            container.classList.toggle('open');
+        }
+
+        // --- 1. Data Source (Cleaned - No English) ---
+        const cardsData = [
+            // LEVEL 1 (20 Cards)
+            {id:1, level:1, category:"社交", emoji:"🔥", title:"溜滑梯有人插隊", scen:"你排了好久的溜滑梯，結果一個小朋友突然跑過來，直接插在你前面。你覺得好生氣！", brain:"這是因為大腦覺得「不公平」！你的杏仁核（情緒警報器）響了。但動手可能會讓你從「有道理」變成「沒道理」喔。", tips:["練習勇敢：深呼吸，試著用堅定的聲音說：「請排隊，是我先來的。」","尋求支援：如果他說不聽，我們可以找旁邊的大人幫忙維持秩序。"]},
+            {id:2, level:1, category:"社交", emoji:"🔥", title:"不小心撞到人", scen:"你在跑步時不小心撞倒了一個同學，他哭了。你不是故意的，但你現在很害怕被罵。", brain:"這是大腦的「逃跑機制」，因為不想面對被處罰的恐懼。但其實，負責人的小孩更受歡迎喔！", tips:["關心優先：我們先當醫生檢查一下，「你還好嗎？有沒有受傷？」","修復關係：只要誠懇地說「對不起，我不是故意的」，通常對方就會原諒你了。"]},
+            {id:3, level:1, category:"社交", emoji:"🔥", title:"我想跟他們玩", scen:"看到一群同學在玩鬼抓人，看起來好好玩，你很想加入，但你不敢走過去。", brain:"這是「害羞」。大腦擔心被拒絕會很丟臉，所以叫你不要動。", tips:["觀察大師：先在旁邊看 30 秒，看懂他們在玩什麼規則？","通關密語：等一局結束時，走過去問：「看起來好好玩，我可以一起玩嗎？」"]},
+            {id:4, level:1, category:"社交", emoji:"🔥", title:"別人拿著我想玩的玩具", scen:"同學手上有一個你超級想要的變形機器人。你一直盯著看，好想把它搶過來。", brain:"大腦現在只有一個念頭：「我想要！現在就要！」這時候我們需要幫大腦踩一下煞車。", tips:["等待的藝術：我們可以問他：「等你玩完之後，可以借我玩一下嗎？」","交換策略：你手上有什麼好玩的東西嗎？或許我們可以試試看「交換玩」。"]},
+            {id:5, level:1, category:"社交", emoji:"🔥", title:"輸了不想玩", scen:"大家一起玩桌遊，結果你輸了。你覺得很生氣，想把棋盤翻掉說：「我不玩了！」", brain:"大腦想要「贏」來證明自己很厲害。輸的感覺雖然不舒服，但這代表我們發現了可以進步的地方！", tips:["運動家精神：真正的遊戲高手，是輸了也能笑著說「再一次」的人。","自我對話：告訴自己：「這一局運氣不好而已，下一局我會更厲害！」"]},
+            {id:6, level:1, category:"家庭", emoji:"🌿", title:"急著分享不想等", scen:"媽媽正在講重要的電話，但你剛畫好一張圖或是發現一個寶物，急著想拿給媽媽看，一直在旁邊大聲講話。", brain:"你的大腦正處於「興奮模式」，這時候很難切換到「安靜模式」。你不是故意搗蛋，只是太想分享快樂了。", tips:["換位思考：媽媽很想看，但電話讓耳朵好忙。怎麼做可以幫她快點講完？","秘密暗號：下次比一個「手勢」（如摸摸手臂），代表「我有好東西要給你看」。"]},
+            {id:7, level:1, category:"家庭", emoji:"🌿", title:"玩具太多不想收", scen:"客廳地上都是你的樂高和積木。爸爸說：「收玩具了！」你覺得東西多到收不完，乾脆假裝沒聽到，跑去別的地方玩。", brain:"當任務看起來太巨大，大腦會當機覺得「我做不到」。這時候我們需要幫大腦「作弊」一下。", tips:["拆解任務：我們先當「紅色偵探」，只負責把「紅色的」找出來放回盒子就好。","遊戲化：剩下的玩具，我們來比賽！看是樂高跑回家的速度快，還是車車快？"]},
+            {id:8, level:1, category:"家庭", emoji:"🌿", title:"搶玩具大戰", scen:"你和手足（或朋友）同時看上同一個玩具，兩個人的手都抓著不放，誰也不肯鬆手，快要打起來了。", brain:"這時候大腦覺得「資源有限」，如果不搶就沒得玩了。我們來教大腦怎麼「把快樂變大」。", tips:["創造雙贏：如果兩個人一起玩這個玩具，會有什麼新玩法嗎？（例如一人丟一人接）","輪流機制：我們可以用手機設 5 分鐘鬧鐘嗎？鈴聲響了就換人。"]},
+            {id:9, level:1, category:"家庭", emoji:"🌿", title:"該回家了不想走", scen:"在公園玩得正開心，爸爸說：「時間到了，回家。」你全身癱軟在地上說：「我不要！」", brain:"這叫「轉換困難」。你的大腦還停留在「玩樂模式」，突然要關機很痛苦。", tips:["儀式感：我們跟溜滑梯說「拜拜，下次見」，溜最後一次把快樂收進口袋。","期待未來：回家的路上，我們可以來討論下次來公園要玩什麼新遊戲？"]},
+            {id:10, level:1, category:"家庭", emoji:"🌿", title:"吃到不喜歡的菜", scen:"晚餐有你最討厭的青椒。你覺得噁心，想把它偷偷丟到地上或是吐出來。", brain:"這是大腦保護你的本能，怕你吃到奇怪的東西。但你是勇敢的冒險家，你的味覺也在長大喔！", tips:["小冒險：我們不需要全部吃完，只要試著像小老鼠一樣「咬一小口」就好。","禮貌拒絕：如果真的不喜歡，輕輕把菜撥到旁邊說：「我今天不想吃這個，謝謝。」"]},
+            {id:11, level:1, category:"情緒", emoji:"🔮", title:"畫畫畫壞了", scen:"你在畫恐龍，結果手滑畫歪了一筆。你氣得把整張紙揉成一團丟掉！", brain:"這叫「挫折感」。你的大腦希望事情是完美的。但你知道嗎？很多偉大的藝術品都是從「錯誤」變出來的喔！", tips:["轉念魔法：這條畫歪的線，能不能變成恐龍的傷疤，或是背景的閃電？","接受不完美：告訴自己：「沒關係，這張紙在陪我練習，下一張我會畫得更順手。」"]},
+            {id:12, level:1, category:"情緒", emoji:"🔮", title:"怕黑不敢睡", scen:"睡覺關燈後，你覺得衣櫥那邊有怪獸，嚇得一直叫媽媽，不敢閉眼睛。", brain:"大腦的想像力太豐富了，在黑黑的地方會自己編故事。這代表你很聰明，很有想像力！", tips:["守護神：選一個你最愛的玩偶當「守衛」，放在床頭保護你。","控制光線：如果全黑太可怕，我們可以留一盞小小的夜燈。"]},
+            {id:13, level:1, category:"情緒", emoji:"🔮", title:"到了新環境不想分開", scen:"爸媽帶你去參加生日派對或夏令營。現場雖然有其他小朋友，但你覺得很陌生，緊緊抓著爸媽，不想讓他們離開。", brain:"大腦的「警衛」在保護你，它在確認這裡安不安全。這時候你需要一點時間來「熱機」，這是很正常的喔！", tips:["建立安全感：我們不需要馬上跑去玩。先站在旁邊當「觀察員」看看大家在玩什麼？","小任務：你願意帶著你的水壺，陪我去那邊找個位子坐下來嗎？"]},
+            {id:14, level:1, category:"情緒", emoji:"🔮", title:"第一次做不到想放棄", scen:"你第一次嘗試騎腳踏車（或踢球、摺紙），結果失敗了或是跌倒了。你覺得很挫折，生氣地說：「我永遠都學不會！我不玩了！」", brain:"大腦這時候在說「我很笨」。但其實，大腦就像肌肉一樣，覺得「好難」的時候，正是大腦神經在「長大」的時候喔！", tips:["神奇關鍵字：你不是「不會」，你是「還不會」(Not yet)。","看見進步：雖然還沒學會，但你剛剛有成功坐上去（或踢到球）了對不對？"]},
+            {id:15, level:1, category:"情緒", emoji:"🔮", title:"太興奮停不下來", scen:"朋友來家裡玩，你太開心了，開始在沙發上跳，還把朋友推倒了。", brain:"你的大腦「油門」踩到底了，但是「煞車」暫時失靈。太強烈的開心有時候會變成失控，這時候我們需要冷卻一下引擎。", tips:["觀察他人：看看朋友的臉，他現在是笑的還是看起來痛痛的？","冷靜練習：我們來玩「木頭人」遊戲，數到三，大家都要變成石頭不動！"]},
+            {id:16, level:1, category:"安全", emoji:"🛡️", title:"在賣場找不到爸媽", scen:"你在超市看玩具，一轉頭發現爸爸媽媽不見了！周圍都是不認識的人。", brain:"這是「恐慌」。大腦因為太害怕，會叫你趕快跑動去尋找熟悉的身影。但這時候「冷靜」才是救命法寶。", tips:["變成大樹：最聰明的做法是「變成一棵樹，站在原地不動」。因為爸媽一定會回頭來找你。","尋找制服：環顧四周，有沒有穿著制服的店員？他們是可以幫助你的人。"]},
+            {id:17, level:1, category:"安全", emoji:"🛡️", title:"陌生人給糖果", scen:"一個不認識的阿姨在公園拿著棒棒糖給你，笑著說：「這個給你吃，很好吃喔！」", brain:"你的大腦喜歡獎勵（糖果），而且我們通常被教導要對大人有禮貌。但在安全這件事上，你的直覺更重要。", tips:["安全原則：我們的家庭規則是「不拿陌生人的東西」，不管他看起來多親切。","不需要禮貌：這時候你可以直接搖頭，轉身跑去找爸媽。保護自己比有禮貌更重要喔！"]},
+            {id:18, level:1, category:"安全", emoji:"🛡️", title:"小內褲的祕密", scen:"玩遊戲時，有個鄰居大哥哥想要碰你穿小內褲的地方，他說這是檢查身體。", brain:"當遇到奇怪的事情時，小孩常常會嚇呆。你要記得，你的身體是你自己的城堡，你是國王/女王。", tips:["身體界線：穿小內褲的地方，除了幫你洗澡的爸媽，其他人絕對不可以碰。","勇敢發聲：如果有人要碰，你可以大聲喊「不行！走開！」這不是你的錯，一定要回來告訴爸媽。"]},
+            {id:19, level:1, category:"安全", emoji:"🛡️", title:"廚房的熱鍋子", scen:"廚房桌上有一碗剛煮好的湯，冒著白煙。你很餓，想墊腳尖去拿來喝。", brain:"大腦專注在「食物」上，忽略了「危險」。但我們要訓練大腦看到「白煙」就想到「紅色警報」。", tips:["辨識危險：看到白色的煙，代表那個東西非常燙。我們能不能等煙不見了再靠近？","請求支援：墊腳尖拿東西很不穩，請大人幫你拿下來。"]},
+            {id:20, level:1, category:"安全", emoji:"🛡️", title:"馬路上的球", scen:"你的球滾到大馬路上了！你很心急，想馬上衝過去撿回來。", brain:"這叫「隧道視野」。你太想救你的球了，完全看不見旁邊有車子。但我們要學會判斷「什麼比較重要」。", tips:["價值判斷：球壞了我們可以再買新的，但是世界上只有一個你，你比球珍貴一千倍！","正確解法：球滾到馬路上，我們要站在路邊，請大人幫忙看車子，確定沒車了再去撿。"]},
+
+            // LEVEL 2 (20 Cards)
+            {id:21, level:2, category:"社交", emoji:"🔥", title:"朋友在講悄悄話", scen:"你看到兩個好朋友湊在一起講悄悄話，還一邊看著你笑。你覺得他們一定是在講你的壞話。", brain:"這是大腦的「猜測」功能。因為聽不到，大腦為了保護你，會自動把情況想成「最糟糕」的樣子。", tips:["事實核對：他們真的在講你壞話嗎？還是剛好講到好笑的事看著你？","大方詢問：試試看走過去笑著問：「你們在講什麼祕密這麼好笑？我可以聽嗎？」"]},
+            {id:22, level:2, category:"社交", emoji:"🔥", title:"朋友愛管人", scen:"你的朋友總是規定大家要玩什麼，如果你不聽他的，他就會說：「那我不要跟你好了。」", brain:"這是一種「控制」。朋友可能還沒學會尊重別人。但你的大腦要記得：真正的友誼是平等的，不是聽命令。", tips:["設立界線：練習溫柔但堅定地說：「我今天不想玩這個，如果你們要玩這個，那我先去玩別的囉。」","提議輪流：「昨天玩你決定的，今天應該換我決定，這樣才公平對不對？」"]},
+            {id:23, level:2, category:"社交", emoji:"🔥", title:"被取難聽的綽號", scen:"同學幫你取了一個你不喜歡的綽號，大家都在笑。你覺得很丟臉，心裡很難過。", brain:"你的大腦覺得「名譽受損」。但對付嘲笑最好的武器，不是眼淚，而是「無聊」。", tips:["冷處理：當他們覺得這招傷不了你，就會覺得無聊了。聳聳肩說：「喔，所以呢？」然後走開。","正式告知：私下嚴肅地跟他說：「我不喜歡那個名字，請不要這樣叫我。」"]},
+            {id:24, level:2, category:"社交", emoji:"🔥", title:"想告狀還是想解決？", scen:"你看到同學做了一件違反規定的小事（例如沒帶課本），你很想馬上舉手跟老師說。", brain:"這個年紀的大腦很愛「正義」，覺得抓到別人錯很有成就感。但我們要區分這是在「幫忙」還是「找麻煩」。", tips:["過濾器：問自己：「有人受傷嗎？東西壞了嗎？」如果沒有，這可能不需要馬上告狀。","直接幫忙：比起告訴老師，借他看課本是不是更能解決問題？"]},
+            {id:25, level:2, category:"社交", emoji:"🔥", title:"不小心弄壞玩具", scen:"你借了朋友心愛的變形機器人回家玩，結果不小心把它的手弄斷了。你很慌張，不敢告訴他。", brain:"這是「罪惡感」在作祟。大腦怕面對被罵或朋友不理你的後果。但「信任」比玩具更難修好，我們不能打破它。", tips:["解決問題導向：跟爸媽討論看看，是我們試著修理它？還是買一個新的還給他？","真誠的勇氣：拿著壞掉的玩具跟他說：「對不起，我玩的時候太粗魯把它弄壞了，我會賠償你。」"]},
+            {id:26, level:2, category:"家庭", emoji:"🌿", title:"為什麼只有我沒有？", scen:"媽媽帶大家去買東西。哥哥買了鞋，弟弟買了尿布。只有你兩手空空，什麼都沒買。你覺得超級不公平！", brain:"大腦啟動了「公平雷達」。在大腦的計算裡，公平等於「每個人都要拿一樣多」。但真實世界的公平叫做「誰有需要，誰就得到」。", tips:["需要 vs 想要：哥哥買鞋是「需要」，弟弟買尿布也是「需要」。那你現在有缺什麼「必須要用」的東西嗎？","隱形的愛：沒有買新鞋，代表你很愛惜東西！「公平」是當你需要的時候，爸媽一定也會買給你。"]},
+            {id:27, level:2, category:"家庭", emoji:"🌿", title:"客人來訪時", scen:"家裡來了客人，爸媽在聊天。你覺得很無聊，一直打斷他們說話，或是跳來跳去。", brain:"你的大腦覺得被冷落了。但這是一個練習「社交禮儀」的好機會。", tips:["禮貌插話：如果真的有急事，先把手放在爸媽手臂上，等他們轉頭看你再說話。","小主人任務：你可以當「招待隊長」嗎？幫忙倒水、拿水果，或者負責照顧客人的小孩？"]},
+            {id:28, level:2, category:"家庭", emoji:"🌿", title:"電玩時間結束了", scen:"鬧鐘響了，電玩時間到了。但你正好打到最關鍵的關卡，還沒存檔。爸媽叫你馬上關掉。", brain:"你的多巴胺（快樂激素）正在高點，突然切斷會讓你非常暴躁。但約定就是約定。", tips:["談判技巧：不要用吼的，試著冷靜說：「爸爸，我現在關掉進度會不見，可以給我 2 分鐘存檔嗎？存完我馬上關。」","信用帳戶：如果你說 2 分鐘就真的只用 2 分鐘，下次爸媽就會信任你。"]},
+            {id:29, level:2, category:"家庭", emoji:"🌿", title:"被誤會沒做家事", scen:"垃圾不是你亂丟的，但媽媽一進房間就罵你：「為什麼又把房間弄亂！」你覺得超級委屈。", brain:"被冤枉時，杏仁核會爆炸，讓你無法好好說話。但頂嘴只會讓戰火變大。", tips:["先冷靜再解釋：等媽媽罵完（深呼吸），再平靜地說：「媽，那個垃圾是弟弟剛剛丟的，不是我。」","證據說話：「我可以現在把它撿起來，但我想讓妳知道那真的不是我弄的。」"]},
+            {id:30, level:2, category:"家庭", emoji:"🌿", title:"隱私權", scen:"你發現爸媽或是手足在看你的日記本，或是亂翻你的書包。你覺得很生氣，覺得祕密被偷看了。", brain:"這是「界線」被侵犯的感覺。每個人都需要一點自己的空間，這是長大的證明。", tips:["表達感受：認真地跟家人坐下來說：「我不喜歡你們看我的東西，這讓我覺得不舒服。請你們下次先問我。」","交換信任：如果書包裡沒有違禁品，我們可以大方展示，但也請他們尊重那些寫著心情的小本子。"]},
+            {id:31, level:2, category:"情緒", emoji:"🔮", title:"上台報告很緊張", scen:"老師叫你上台唸課文或是演講。你看著台下那麼多雙眼睛，覺得心臟快跳出來，腦袋一片空白。", brain:"這是「戰或逃」反應。大腦誤以為台下的同學是「獅子」，所以讓你心跳加速準備逃跑。其實他們只是你的同學。", tips:["能量轉念：告訴自己：「我不是緊張，我是『興奮』！」把那個怦怦跳的感覺，想像成是你身體裡的電池充飽電了。","分享者心態：別想著「大家在幫我打分數」，試著想「我有一個很棒的故事/知識要送給大家」。"]},
+            {id:32, level:2, category:"情緒", emoji:"🔮", title:"嫉妒好朋友得獎", scen:"你跟好朋友一起參加比賽，結果他得獎了，你沒有。大家都稱讚他，你心裡酸酸的，不想跟他說話。", brain:"這叫「嫉妒」。大腦覺得別人的成功，代表了自己的失敗。但其實，他的成功不代表你不好。", tips:["轉念練習：他是你的好朋友，他開心，我們是不是也可以分一點開心？","學習強者：難過一下沒關係，但我們可以問他：「你怎麼練的？下次教我好不好？」"]},
+            {id:33, level:2, category:"情緒", emoji:"🔮", title:"功課好無聊", scen:"要寫生字或是算數學，覺得超級無聊，坐在桌子前面發呆了半小時，一個字都沒動。", brain:"大腦喜歡新鮮好玩的事，討厭重複無聊的事。這時候需要一點「多巴胺」來騙過大腦。", tips:["計時挑戰：拿計時器出來，「我看我能不能在 10 分鐘內寫完這兩行！」跟時間賽跑會變好玩。","分段獎勵：「寫完這一頁，我就可以去玩樂高。」給大腦一個期待的目標。"]},
+            {id:34, level:2, category:"情緒", emoji:"🔮", title:"大家去玩沒約我", scen:"這週末同學約好去電影院，結果禮拜一去學校你才發現「只有你沒被邀請」。你覺得自己被排擠了。", brain:"這是「錯失恐懼 (FOMO)」。大腦解讀為社群危機。但有時候可能只是剛好位置不夠，或他們忘了。", tips:["自我價值：他們沒約你，不代表你不重要。你週末跟家人也過得很開心不是嗎？","主動出擊：與其在那邊猜，不如這週末換你來主動約朋友：「這週六我想去公園，誰要來？」"]},
+            {id:35, level:2, category:"情緒", emoji:"🔮", title:"當眾出糗", scen:"你在走廊上滑了一大跤，或是吃午餐時打翻湯灑在身上。大家都看到了。你想找個地洞鑽進去。", brain:"這叫「尷尬」。大腦覺得這是一個社交危機。但你知道嗎？大家其實更關心自己的事，明天就沒人記得了。", tips:["幽默感：如果你自己先笑出來：「哇！我剛表演了一個超級滑壘！」大家就會跟著笑，而不是嘲笑你了。","接受它：跌倒就站起來拍拍灰塵，這沒什麼大不了的。每個人都會跌倒。"]},
+            {id:36, level:2, category:"安全", emoji:"🛡️", title:"人擠人的地方走散了", scen:"去跨年或逛夜市，人超級多。你一不小心手鬆開，被人群擠到看不到爸媽了。", brain:"人群流動很快，你亂跑會離爸媽更遠。這時候要利用「制高點」或「特殊人物」。", tips:["原地等待 + 觀察：如果人群一直在動，你盡量靠邊邊站（避免被踩到），然後不要動。","尋找警察/服務台：這種大型活動通常有警察或拿著麥克風的主持人。找他們幫忙廣播。"]},
+            {id:37, level:2, category:"安全", emoji:"🛡️", title:"不能說的祕密", scen:"一個親戚或教練跟你說：「我們來玩個遊戲，但這是我們的小祕密，絕對不可以跟媽媽說喔。」", brain:"壞人最喜歡利用「祕密」來控制小孩。記住，會讓你快樂的驚喜才叫祕密，讓你覺得怪怪的叫「危險」。", tips:["分辨祕密：好的祕密大家都會開心，壞的祕密通常會讓你擔心。這個祕密讓你覺得舒服嗎？","打破約定：在安全這件事上，你不需要守信用。不管對方說什麼，一定要告訴家裡的大人。"]},
+            {id:38, level:2, category:"安全", emoji:"🛡️", title:"網路遊戲的朋友", scen:"你在玩平板遊戲，一個隊友問你：「你幾歲？住在哪裡？我們下次約出來見面好不好？」", brain:"在網路上，你不知道螢幕後面是小學生還是壞叔叔。個資（地址、學校）是你的防護盾，不能給人。", tips:["數位界線：遊戲裡只能聊遊戲（例如：去攻打哪裡），不能聊現實生活（例如：我住哪裡）。","直接封鎖：如果他一直問，讓你覺得煩或奇怪，直接按「封鎖」或告訴爸媽。"]},
+            {id:39, level:2, category:"安全", emoji:"🛡️", title:"朋友起鬨做危險的事", scen:"同學說：「如果你敢從這個高台跳下去，你就是英雄！不敢跳就是膽小鬼！」", brain:"這叫「同儕壓力」。大腦很怕被排擠，所以會關掉「危險警報」。但真正的勇敢是保護自己的安全。", tips:["重新定義勇敢：聽別人的話去做傻事不叫勇敢，叫「被控制」。敢說「我不做這個，這很危險」才是有主見的英雄。","轉移話題：「跳那個無聊死了，我們來比賽跑/單槓，看誰比較厲害！」"]},
+            {id:40, level:2, category:"安全", emoji:"🛡️", title:"家人突然昏倒了", scen:"家裡只有你和奶奶，結果奶奶突然倒在地上叫不醒。你嚇壞了。", brain:"遇到生死交關的事，大腦會當機。但這時候你是家裡唯一的指揮官，你的冷靜可以救命。", tips:["打電話求救：拿起電話或手機，撥打急救電話（119）。","清楚說話：練習說：「我是誰，我住在哪裡（地址），奶奶昏倒了。」警察會教你怎麼做，不要掛電話。"]},
+
+            // LEVEL 3 (20 Cards)
+            {id:41, level:3, category:"社交", emoji:"🔥", title:"被小圈圈排擠", scen:"班上幾個同學自成一國，說那是他們的「祕密基地」，跟你說：「你不能加入，這裡不歡迎你。」", brain:"這是人類原始的「歸屬感需求」。大腦覺得「落單=死亡」。但其實，強求來的位子坐不久。", tips:["重新定義價值：真正的朋友會讓你覺得舒服，而不是讓你覺得自己不夠好。問自己：「我真的喜歡跟他們玩嗎？」","建立新連結：環顧四周，一定也有沒加入那個圈圈的人。去跟他們說話，建立你自己的「快樂基地」。"]},
+            {id:42, level:3, category:"社交", emoji:"🔥", title:"聽到朋友講壞話", scen:"你的好朋友跑來跟你說另一個同學的壞話，還叫你一起討厭他。你覺得那個同學其實沒那麼壞。", brain:"這叫「從眾壓力」。大腦怕如果不跟著罵，下一個被罵的就是自己。但這時候你的「良心指南針」在亮紅燈喔！", tips:["中立表態：你不需要吵架，只需要淡淡地說：「是喔？可是他上次借我筆，我覺得他還不錯耶。」","轉移話題：「不講他了啦，好無聊。我們去打球！」把朋友的注意力帶去更正面的事情上。"]},
+            {id:43, level:3, category:"社交", emoji:"🔥", title:"朋友做了不對的事", scen:"你看見好朋友作弊，或是偷拿福利社的東西。他叫你不准說出去。你心裡很掙扎。", brain:"這是「忠誠度」與「正直」的打架。大腦很痛苦。但真正的忠誠，是幫助朋友不走歪路，而不是陪他一起錯。", tips:["私下勸告：當只有兩個人的時候，認真跟他說：「我很想挺你，但作弊被抓到後果很嚴重，我是朋友才不想看你出事。」","區分輕重：如果是危險或違法的事，保護朋友的唯一方式，其實是告訴大人。這不是害他，是救他。"]},
+            {id:44, level:3, category:"社交", emoji:"🔥", title:"開玩笑還是霸凌？", scen:"同學一直弄你，你說不喜歡，他卻說：「開個玩笑而已，你也太開不起玩笑了吧！」", brain:"這是高級的「心理操縱」。記住公式：只要有一方覺得不好笑，那就不是玩笑，那是欺負。", tips:["堅定立場：看著他的眼睛，面無表情地說：「對，我就是覺得不好笑。請你停止。」","離開現場：如果他繼續講，直接轉身離開。"]},
+            {id:45, level:3, category:"社交", emoji:"🔥", title:"如何有誠意地道歉", scen:"你這次真的做錯事傷了朋友的心。你說了「對不起」，但他還是不理你。你覺得很煩：「我都道歉了你還要怎樣？」", brain:"隨口說的對不起只是「想讓自己好過」。真正修復大腦創傷的道歉，需要「行動」。", tips:["道歉三部曲：試試看完整的說法：「對不起（認錯），我不應該嘲笑你（具體事實），下次我會注意口氣（承諾改變）。」","補償行動：問他：「我要怎麼做，你才會感覺好一點？」"]},
+            {id:46, level:3, category:"家庭", emoji:"🌿", title:"爭取更多權利", scen:"你覺得自己長大了，想要晚一點睡覺，或是增加玩手機的時間。爸媽直接說：「不行。」", brain:"這是「對抗模式」。但對付爸媽，「鬧」通常只會讓他們抓更緊。這時候你需要啟動「談判專家」模式。", tips:["提出提案：不要只是「要」，要給出「計畫」。例如：「如果我這週都能在 8 點前寫完功課，週五晚上能不能多玩 30 分鐘？」","證明能力：權利是跟著責任來的。先證明你能控制自己。"]},
+            {id:47, level:3, category:"家庭", emoji:"🌿", title:"爸媽說話不算話", scen:"爸爸答應週末帶你去樂園，結果因為工作臨時取消了。你覺得被騙了，超級失望。", brain:"大腦的「預期落空」會引發類似疼痛的反應。但大人有時候也有身不由己的苦衷（雖然這真的很討厭）。", tips:["表達失望：你可以說：「我真的很期待，所以現在非常難過。」讓爸媽知道這件事對你有多重要，而不是只發脾氣。","協商補償：等情緒過了，跟爸爸談判：「那下次要去哪裡補償我？而且我們要打勾勾，不可以再改了。」"]},
+            {id:48, level:3, category:"家庭", emoji:"🌿", title:"想要有隱私", scen:"你在房間關著門做自己的事，爸媽一直不敲門就闖進來，或是問：「你在幹嘛？為什麼要關門？」", brain:"這代表你的「自我意識」在長大，需要獨立空間。但爸媽的擔憂是因為他們習慣「照顧」你了，還不習慣你長大。", tips:["溝通規則：在平靜的時候跟爸媽說：「我只是想安靜畫畫/看書。如果你們進來前先敲門，我會很開心。」","主動回報：偶爾主動開門秀一下你在幹嘛，他們放心了，就會給你更多自由。"]},
+            {id:49, level:3, category:"家庭", emoji:"🌿", title:"為了逃避處罰而說謊", scen:"你考砸了或是打破貴重物品。你很想把考卷藏起來，或是騙說是貓弄壞的。", brain:"說謊是「高利貸」。你現在躲過了處罰，但以後要用「信用破產」來還。一旦爸媽不相信你了，以後就算你說實話，他們也會懷疑。", tips:["長遠思考：被罵一下會痛，但失去信任會痛很久。","止損策略：主動自首通常會從輕發落。試試看：「我考差了，我很難過，但我不敢騙你們。」"]},
+            {id:50, level:3, category:"家庭", emoji:"🌿", title:"對家人的情緒勒索", scen:"你很想要一個昂貴的東西，爸媽不買，你就說：「你們都不愛我！別人的爸媽都比較好！」", brain:"這是用「愛」當武器來攻擊最愛你的人。這雖然有效，但是會讓家人的心受傷。", tips:["分辨愛與物質：買東西是「錢」的問題，愛你是「心」的問題。不買給你，不代表不愛你。","正向請求：「我真的很想要那個，我知道很貴。我可以存零用錢或是做家事來幫忙分擔嗎？」"]},
+            {id:51, level:3, category:"情緒", emoji:"🔮", title:"完美主義作祟", scen:"你考了 98 分，但你只盯著錯的那一題看，覺得自己很失敗，開心不起來。", brain:"這是「完美主義」陷阱。大腦誤以為「完美 = 有價值」。但這個世界沒有完美的人，只有「不斷進步」的人。", tips:["肯定努力：那 98 分是你辛苦得來的，先給它們掌聲！","擁抱錯誤：錯的那一題是上帝送你的禮物，提醒你：「嘿！這裡有個小洞，補起來你就更強了！」"]},
+            {id:52, level:3, category:"情緒", emoji:"🔮", title:"羨慕別人的才華", scen:"同學鋼琴彈得好，或是球踢得超棒。看著他發光的樣子，你覺得自己好像什麼都不會，很平庸。", brain:"大腦這時候戴上了「黑白眼鏡」，只看到別人的亮點，看不到自己的光芒。", tips:["尋找亮點：他擅長鋼琴，那你呢？你也許擅長畫畫、擅長傾聽、或是擅長讓別人開心？","轉化嫉妒：與其羨慕，不如去問他：「你好厲害，你練了多久？」你會發現每一個天才背後都是滿滿的努力。"]},
+            {id:53, level:3, category:"情緒", emoji:"🔮", title:"覺得自己很醜/身材焦慮", scen:"照鏡子時，覺得自己太胖/太瘦/太黑，或是哪裡長得不好看。你不喜歡自己的樣子。", brain:"這個年紀開始會在意「外表」。但大腦的審美觀很容易被廣告和電視騙了。你的身體是你的「載具」，功能比外殼重要。", tips:["感謝身體：看看你的腿，它能帶你跑步；看看你的手，它能畫畫。對你的身體說謝謝，它很努力在幫你。","自信濾鏡：最漂亮的人不是五官完美的人，而是「笑起來很有自信」的人。"]},
+            {id:54, level:3, category:"情緒", emoji:"🔮", title:"團體報告有人擺爛", scen:"分組做報告，組員都不做事，只有你一個人在忙。你覺得超累又超生氣！", brain:"這是「領導力」的修練場。生氣沒用，你需要的是「分配任務」的智慧。", tips:["明確分工：不要說「大家要加油」，要說「A畫圖，B查資料，C寫字」。指令越清楚，大家越容易動起來。","尋求協助：如果真的有人不配合，跟他說：「我們需要你的幫忙才能完成。」如果還是不行，跟老師說明分工狀況。"]},
+            {id:55, level:3, category:"情緒", emoji:"🔮", title:"壓力大到睡不著", scen:"明天有大考或是重要比賽，你躺在床上腦袋轉個不停，越想越緊張，完全睡不著。", brain:"大腦現在是「備戰狀態」。一直想著「睡不著怎麼辦」會讓大腦更焦慮。", tips:["4-7-8 呼吸法：吸氣 4 秒，憋氣 7 秒，吐氣 8 秒。這會強制大腦切換到「放鬆模式」。","大腦卸貨：把擔心的事寫在紙上，跟大腦說：「我寫下來了，明天再煩惱，現在先休息。」"]},
+            {id:56, level:3, category:"安全", emoji:"🛡️", title:"網路霸凌", scen:"你在群組或是遊戲裡，看到有人傳訊息罵你，或是把你的照片亂改圖傳出去。", brain:"網路霸凌者想要的就是「看你生氣」。如果你回應，他們就贏了。", tips:["冷靜蒐證：千萬不要刪掉訊息！「截圖」存下來。這是保護你的證據。","斷開連結：封鎖那個人，然後告訴爸媽或老師。你不需要在網路上忍受垃圾話。"]},
+            {id:57, level:3, category:"安全", emoji:"🛡️", title:"免費的陷阱", scen:"看到一個連結寫「點擊這裡免費領取遊戲寶物/點數」，或是「恭喜你中獎 iPhone」。", brain:"這是利用你的「貪心」設下的陷阱。記住網路鐵律：免費的最貴。", tips:["停看聽：天下沒有白吃的午餐。為什麼陌生人要送你好東西？","求證：不要自己點，把連結給懂電腦的大人看，通常一眼就能看出是詐騙。"]},
+            {id:58, level:3, category:"安全", emoji:"🛡️", title:"單獨在家有陌生人按鈴", scen:"爸媽出去一下，你在家。突然有人按電鈴說：「我是修瓦斯的/送包裹的，幫我開門。」", brain:"壞人最喜歡假裝成工作人員。在「確認安全」之前，門絕對是你的最後一道防線。", tips:["隔門回應：不要開門！隔著門大聲說：「請你把它放在門口/下次再來。」","製造假象：就算只有你一個人在家，也要假裝家裡有人，例如對著屋內喊：「爸爸～有人找你！」"]},
+            {id:59, level:3, category:"安全", emoji:"🛡️", title:"讓人不舒服的長輩", scen:"一個你認識的長輩（老師、教練、親戚）對你做出奇怪的舉動，讓你覺得毛毛的。", brain:"這是「權威壓力」。但請相信你的直覺。如果你的肚子覺得怪怪的，那通常就是有問題。", tips:["相信直覺：你的感覺是對的。不需要找理由，只要覺得不舒服，就可以拒絕。","打破權威：壞人常利用「我是老師你敢不聽？」來壓你，但爸媽永遠是你的靠山。"]},
+            {id:60, level:3, category:"安全", emoji:"🛡️", title:"搭車坐過站/搭錯車", scen:"你練習自己搭公車或捷運，結果玩手機分心坐過站了，到了一個完全陌生的地方。", brain:"這是「迷航恐慌」。慌張會讓你做出更危險的決定（例如亂走）。", tips:["留在站內/車上：如果是在捷運/公車上，不要急著出站。去問站務員或司機：「我不小心坐過站了，請問怎麼回去？」","尋找地標：如果已經下車，找一家便利商店，在裡面打電話給爸媽報告位置，然後原地等待。"]}
+        ];
+
+        // --- 2. State Management ---
+        const LS_KEY = "thinkingCardsData_v18_clean"; 
+        let currentLevel = 1;
+        let gameState = {
+            drawnIds: [],
+            collection: {} 
+        };
+
+        let currentCardId = null;
+        let selectedMood = "😌"; 
+        let historySelectedMood = ""; 
+        let feedbackRating = 0;
+
+        const levelRewards = {
+            1: { theme: "balloon", emoji: "🎈", title: "小小思考家", childMsg: "哇！太棒了！🎉<br>你收集了所有勇氣，你的大腦肌肉變強壯了！<br>遇到問題時，你已經學會停下來想一想囉！", parentMsg: "恭喜！您已經陪伴孩子踏出了情緒調節的第一步。這些種子會慢慢發芽的。" },
+            2: { theme: "star", emoji: "✨", title: "情緒偵探", childMsg: "太厲害了！✨<br>你是解決問題的高手！<br>就算遇到複雜的情況，你也能像偵探一樣找出好辦法！", parentMsg: "這是不容易的過程。看著孩子從衝突中學習溝通，是父母最大的欣慰。請給自己一個掌聲！" },
+            3: { theme: "firework", emoji: "🎆", title: "大腦大師", childMsg: "不可思議！🎆<br>你已經是「大腦大師」了！<br>你學會了把「糟糕了」變成「我有辦法」，沒有什麼能難倒你！", parentMsg: "感謝您的耐心與堅持。這 60 次的對話，將成為孩子一輩子受用的心理韌性與寶藏。" }
+        };
+        
+        // --- 3. Initialization ---
+        function init() {
+            const saved = localStorage.getItem(LS_KEY);
+            if (saved) {
+                gameState = JSON.parse(saved);
+            }
+            
+            document.getElementById('note-date').valueAsDate = new Date();
+            currentLevel = parseInt(document.getElementById('level-select').value);
+            updateLevelColors();
+            renderBinder();
+            updateProgress();
+            renderBadges();
+        }
+
+        function updateLevelColors() {
+            const root = document.documentElement;
+            if(currentLevel === 1) root.style.setProperty('--level-color', '#ffcb05'); // Yellow
+            else if(currentLevel === 2) root.style.setProperty('--level-color', '#009688'); // Teal
+            else if(currentLevel === 3) root.style.setProperty('--level-color', '#9c27b0'); // Purple
+        }
+
+        function changeLevel(val) {
+            currentLevel = parseInt(val);
+            updateLevelColors();
+            document.getElementById('deck-container').style.display = 'flex';
+            document.getElementById('active-card').style.display = 'none';
+            document.getElementById('completion-message').style.display = 'none';
+            renderBinder();
+            updateProgress();
+            
+            const levelCardIds = getLevelCardIds(currentLevel);
+            const drawnCount = levelCardIds.filter(id => gameState.drawnIds.includes(id)).length;
+            if (drawnCount >= levelCardIds.length && levelCardIds.length > 0) {
+                showCompletion();
+            }
+        }
+
+        function getLevelCardIds(lvl) { return cardsData.filter(c => c.level === lvl).map(c => c.id); }
+
+        function updateProgress() {
+            const levelCardIds = getLevelCardIds(currentLevel);
+            const drawnCount = levelCardIds.filter(id => gameState.drawnIds.includes(id)).length;
+            document.getElementById('progress-text').innerText = `${drawnCount} / ${levelCardIds.length}`;
+        }
+        
+        function renderBadges() {
+            const container = document.getElementById('badges-container');
+            container.innerHTML = '';
+            
+            const badgesMeta = [
+                { lvl: 1, emoji: '🎈', title: 'Level 1: 小小思考家' },
+                { lvl: 2, emoji: '✨', title: 'Level 2: 情緒偵探' },
+                { lvl: 3, emoji: '🎆', title: 'Level 3: 大腦大師' }
+            ];
+            
+            badgesMeta.forEach(b => {
+                const cardIds = getLevelCardIds(b.lvl);
+                const isComplete = cardIds.length > 0 && cardIds.every(id => gameState.drawnIds.includes(id));
+                const badgeEl = document.createElement('span');
+                badgeEl.className = isComplete ? 'badge unlocked' : 'badge';
+                badgeEl.innerText = b.emoji;
+                badgeEl.title = b.title;
+                container.appendChild(badgeEl);
+            });
+        }
+
+        // --- 4. Core Logic ---
+        function drawCard() {
+            const available = cardsData.filter(c => c.level === currentLevel && !gameState.drawnIds.includes(c.id));
+            
+            if (available.length === 0) {
+                showCompletion();
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * available.length);
+            const card = available[randomIndex];
+            currentCardId = card.id;
+
+            document.getElementById('deck-container').style.display = 'none';
+            const wrapper = document.getElementById('active-card');
+            wrapper.style.display = 'block';
+            wrapper.classList.remove('flipped'); 
+
+            // Fill Content (Only Chinese fields)
+            document.getElementById('card-type').innerText = card.category;
+            document.getElementById('card-image').innerText = card.emoji;
+            document.getElementById('card-title').innerText = card.title;
+            document.getElementById('card-cat-icon').innerText = card.emoji; 
+            document.getElementById('card-scen').innerText = card.scen;
+            document.getElementById('card-level').innerText = "Lv." + card.level;
+
+            document.getElementById('guide-brain').innerText = card.brain;
+            
+            const tipsList = document.getElementById('guide-tips');
+            tipsList.innerHTML = "";
+            card.tips.forEach(tip => {
+                const li = document.createElement('li');
+                li.innerText = tip;
+                tipsList.appendChild(li);
+            });
+
+            resetMoodSelection();
+            document.getElementById('note-text').value = "";
+            document.getElementById('front-stress-slider').value = 5;
+            document.getElementById('stress-val-display').innerText = 5;
+        }
+
+        function flipCard() {
+            const wrapper = document.getElementById('active-card');
+            wrapper.classList.toggle('flipped');
+            if(wrapper.classList.contains('flipped')) {
+                const guideSection = document.querySelector('.guide-section');
+                if(guideSection) guideSection.scrollTop = 0;
+            }
+        }
+
+        function selectMood(el, moodVal) {
+            document.querySelectorAll('#mood-options .mood-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedMood = moodVal;
+        }
+
+        function resetMoodSelection() {
+            document.querySelectorAll('#mood-options .mood-option').forEach(opt => opt.classList.remove('selected'));
+            selectedMood = ""; 
+        }
+
+        function saveCard() {
+            if (!currentCardId) return;
+            if (!selectedMood) selectedMood = "😌"; 
+
+            const stressVal = document.getElementById('front-stress-slider').value;
+            const noteData = {
+                date: document.getElementById('note-date').value,
+                stress: stressVal,
+                mood: selectedMood,
+                text: document.getElementById('note-text').value
+            };
+
+            if (!gameState.drawnIds.includes(currentCardId)) {
+                gameState.drawnIds.push(currentCardId);
+            }
+            gameState.collection[currentCardId] = noteData;
+
+            localStorage.setItem(LS_KEY, JSON.stringify(gameState));
+
+            showToast();
+            renderBinder();
+            updateProgress();
+            renderBadges();
+
+            document.getElementById('active-card').style.display = 'none';
+            
+            checkLevelCompletion(currentLevel);
+        }
+
+        function checkLevelCompletion(lvl) {
+            const levelCardIds = getLevelCardIds(lvl);
+            const drawnCount = levelCardIds.filter(id => gameState.drawnIds.includes(id)).length;
+            
+            if (drawnCount >= levelCardIds.length) {
+                showCompletion();
+                showRewardModal(lvl); 
+            } else {
+                document.getElementById('deck-container').style.display = 'flex';
+            }
+        }
+
+        function showCompletion() {
+            document.getElementById('deck-container').style.display = 'none';
+            document.getElementById('completion-message').style.display = 'block';
+        }
+
+        function showRewardModal(lvl) {
+            const rewardData = levelRewards[lvl];
+            if(!rewardData) return;
+
+            const contentHTML = `
+                <div class="modal-close-btn" onclick="document.getElementById('reward-modal').style.display='none'">×</div>
+                <span class="reward-emoji">${rewardData.emoji}</span>
+                <div class="reward-title">${rewardData.title}</div>
+                
+                <div class="reward-message-box">
+                    <span class="reward-label">給小朋友:</span>
+                    <div class="reward-text">${rewardData.childMsg}</div>
+                </div>
+                
+                <div class="reward-message-box" style="border-left-color:#e94e57;">
+                    <span class="reward-label">給家長:</span>
+                    <div class="reward-text">${rewardData.parentMsg}</div>
+                </div>
+            `;
+            
+            document.getElementById('reward-content').innerHTML = contentHTML;
+            const rootStyle = getComputedStyle(document.documentElement);
+            document.getElementById('reward-content').style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--level-color');
+            document.getElementById('reward-modal').style.display = 'flex';
+        }
+
+        function renderBinder() {
+            const grid = document.getElementById('binder-grid');
+            grid.innerHTML = "";
+            const levelCards = cardsData.filter(c => c.level === currentLevel);
+
+            levelCards.forEach(card => {
+                const slot = document.createElement('div');
+                slot.className = 'binder-slot';
+
+                if (gameState.drawnIds.includes(card.id)) {
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'binder-card';
+                    cardDiv.innerHTML = `
+                        <div class="binder-check">✔</div>
+                        <div class="binder-emoji">${card.emoji}</div>
+                        <div>${card.title}</div>
+                    `;
+                    cardDiv.onclick = () => viewCardHistory(card.id);
+                    slot.appendChild(cardDiv);
+                } else {
+                    slot.innerText = "?";
+                    slot.style.color = "#aaa";
+                }
+                grid.appendChild(slot);
+            });
+        }
+
+        // --- History Modal ---
+        function viewCardHistory(id) {
+            const card = cardsData.find(c => c.id === id);
+            const userNote = gameState.collection[id];
+            historySelectedMood = userNote.mood; 
+
+            const tipsHtml = card.tips.map(t => `<li>${t}</li>`).join('');
+
+            const moodOptionsHtml = ['😌', '😄', '😢', '😠', '😨', '😒', '🤯'].map(emoji => {
+                const labels = {'😌':'平靜', '😄':'開心', '😢':'難過', '😠':'憤怒', '😨':'害怕', '😒':'嫉妒', '🤯':'崩潰'};
+                const isSelected = emoji === userNote.mood ? 'selected' : '';
+                return `<div class="mood-option ${isSelected}" onclick="selectHistoryMood(this, '${emoji}')">${emoji}<div class="mood-label">${labels[emoji]}</div></div>`;
+            }).join('');
+
+            const html = `
+                <div class="history-card-wrapper">
+                    <div class="modal-close-btn" onclick="document.getElementById('view-modal').style.display='none'">×</div>
+                    <div class="history-card-header">
+                        <span>${card.category} | ${card.title}</span>
+                        <span class="level-badge">Lv.${card.level}</span>
+                    </div>
+                    <div class="history-card-body">
+                        <div class="history-left-col">
+                            <div style="font-size:3rem; text-align:center; margin-bottom:10px;">${card.emoji}</div>
+                            <div class="scenario-text"><p><strong>情境：</strong>${card.scen}</p></div>
+                            <hr style="border:0; border-top:1px dashed #ccc; margin:15px 0;">
+                            <div class="guide-section" style="padding:0;">
+                                <strong style="color:var(--primary-blue);">🧠 大腦小知識:</strong>
+                                <p style="margin-top:5px; font-size:0.9rem;">${card.brain}</p>
+                                <strong style="color:var(--primary-blue); margin-top:10px; display:block;">💡 建議應對:</strong>
+                                <ul style="padding-left:20px; font-size:0.9rem;">${tipsHtml}</ul>
+                            </div>
+                        </div>
+                        <div class="history-right-col">
+                            <div class="section-title" style="font-size:0.9rem; margin-bottom:15px;">📝 歷史紀錄</div>
+                            <div style="background:white; padding:10px; border-radius:8px; margin-bottom:15px; border:1px solid #ddd;">
+                                <div style="color:#d32f2f; font-size:0.9rem; margin-bottom:5px;"><strong>🔥 當時壓力指數:</strong> ${userNote.stress || 'N/A'} / 10</div>
+                            </div>
+                            <div class="form-row"><label style="font-size:0.85rem; color:#555;">日期:</label><input type="date" id="history-note-date" value="${userNote.date}"></div>
+                            <div style="font-size:0.8rem; margin-bottom:5px; color:#555;">情緒:</div>
+                            <div class="mood-selector" id="history-mood-options">${moodOptionsHtml}</div>
+                            <div style="font-size:0.8rem; margin-bottom:5px; margin-top:10px; color:#555;">回應與筆記:</div>
+                            <textarea id="history-note-text" style="height:100px;" placeholder="修改紀錄...">${userNote.text || ""}</textarea>
+                            <button class="btn-save" onclick="updateHistory(${id})" style="background:#2e7d32; margin-top:15px;">💾 更新紀錄</button>
+                        </div>
+                    </div>
+                    <div class="history-brand-footer">Brainymama</div>
+                </div>
+            `;
+            
+            document.getElementById('modal-content-area').innerHTML = html;
+            document.getElementById('view-modal').style.display = 'flex';
+        }
+
+        function selectHistoryMood(el, moodVal) {
+            document.querySelectorAll('#history-mood-options .mood-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            historySelectedMood = moodVal;
+        }
+
+        function updateHistory(id) {
+            const date = document.getElementById('history-note-date').value;
+            const text = document.getElementById('history-note-text').value;
+            const oldData = gameState.collection[id];
+            
+            const updatedData = { ...oldData, date: date, mood: historySelectedMood, text: text };
+
+            gameState.collection[id] = updatedData;
+            localStorage.setItem(LS_KEY, JSON.stringify(gameState));
+            showToast();
+        }
+
+        function closeModal(e) {
+            if (e.target.id === 'view-modal') {
+                document.getElementById('view-modal').style.display = 'none';
+            }
+        }
+
+        function showToast(message) {
+            const t = document.getElementById('toast');
+            if (message) t.innerText = message;
+            else t.innerText = "已儲存！";
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function exportDataCSV() {
+            const headers = ["Level", "Category", "Title", "Scenario", "Date", "Stress", "Mood", "Notes"];
+            const rows = [];
+            rows.push(headers.join(","));
+
+            gameState.drawnIds.sort((a,b)=>a-b).forEach(id => {
+                const card = cardsData.find(c => c.id === id);
+                const note = gameState.collection[id];
+                if (card && note) {
+                    const cleanNote = (note.text || "").replace(/"/g, '""');
+                    const cleanScen = (card.scen || "").replace(/"/g, '""');
+                    const row = [card.level, card.category, `"${card.title}"`, `"${cleanScen}"`, note.date, note.stress || "", note.mood, `"${cleanNote}"`];
+                    rows.push(row.join(","));
+                }
+            });
+
+            const csvContent = "\uFEFF" + rows.join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", url);
+            downloadAnchorNode.setAttribute("download", "Brainymama_FlipIt_Data.csv");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function openResetModal() {
+            const levelText = document.getElementById('level-select').options[document.getElementById('level-select').selectedIndex].text;
+            document.getElementById('reset-msg-text').innerText = `您即將刪除 ${levelText} 的所有學習紀錄。\n此動作無法復原！`;
+            document.getElementById('reset-modal').style.display = 'flex';
+        }
+
+        function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; }
+
+        function confirmReset() {
+            const levelCardIds = getLevelCardIds(currentLevel);
+            gameState.drawnIds = gameState.drawnIds.filter(id => !levelCardIds.includes(id));
+            levelCardIds.forEach(id => { delete gameState.collection[id]; });
+
+            localStorage.setItem(LS_KEY, JSON.stringify(gameState));
+            
+            closeResetModal();
+            changeLevel(currentLevel);
+            renderBadges();
+            showToast();
+        }
+
+        function shareApp() {
+            const url = "https://github.com/wantingyeh";
+            
+            // Modern Clipboard API approach first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast("網址已複製到剪貼簿囉！請直接「貼上」分享給朋友。");
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(url);
+                });
+            } else {
+                fallbackCopyTextToClipboard(url);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Ensure it's not visible but part of DOM
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            textArea.style.top = "0";
+            document.body.appendChild(textArea);
+            
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                showToast("網址已複製到剪貼簿囉！請直接「貼上」分享給朋友。");
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showToast("複製失敗，請手動分享網址！");
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        // --- Show Info Modal (Privacy, License, Disclaimer) ---
+        function showInfo(type) {
+            const content = document.getElementById('info-body');
+            let html = '';
+            
+            if (type === 'privacy') {
+                html = `
+                    <h3>隱私權政策 (Privacy Policy)</h3>
+                    <p><strong>您的資料絕對安全。</strong></p>
+                    <p>本 App 採用「本地端儲存 (Local Storage)」技術運作。這意味著：</p>
+                    <ul>
+                        <li>所有的紀錄（包含抽卡進度、日記、心情分數）都只會保存在<strong>您目前使用的這台裝置的瀏覽器中</strong>。</li>
+                        <li>我們<strong>沒有後端資料庫</strong>，因此您的資料絕對不會被上傳至任何雲端伺服器，也不會被第三方存取。</li>
+                    </ul>
+                    <p><strong>如何備份或轉移？</strong><br>若您更換裝置或清除瀏覽器快取，資料將會消失。建議您定期使用「匯出紀錄」功能，將紀錄下載為 CSV 檔案進行備份。</p>
+                `;
+            } else if (type === 'license') {
+                html = `
+                    <h3>使用授權 (Terms of Use)</h3>
+                    <p>本 App 為免費育兒資源，旨在推廣兒童心理韌性與問題解決能力。</p>
+                    <ul>
+                        <li><strong>歡迎分享：</strong> 歡迎家長、老師與教育工作者在「非商業用途」下自由下載、使用與轉發。</li>
+                        <li><strong>註明出處：</strong> 引用或轉載內容時，請務必註明來源為：<strong>Brainymama (大腦媽媽)</strong>。</li>
+                        <li><strong>禁止營利：</strong> 未經書面許可，請勿將本 App 內容用於商業販售、付費課程或修改後重新發布。</li>
+                    </ul>
+                `;
+            } else if (type === 'disclaimer') {
+                html = `
+                    <h3>免責聲明 (Disclaimer)</h3>
+                    <p>本 App 提供之內容與建議僅供教育輔助與參考，不代表專業醫療診斷或心理諮商建議。</p>
+                    <p>若您的孩子出現嚴重的情緒困擾、持續的行為問題或創傷反應，請務必尋求專業醫師、臨床心理師或諮商心理師的協助。</p>
+                `;
+            }
+            
+            content.innerHTML = html;
+            document.getElementById('info-modal').style.display = 'flex';
+        }
+
+        // --- Feedback Modal Functions ---
+        function openFeedbackModal() {
+            const content = document.getElementById('info-body');
+            feedbackRating = 0; // reset
+            
+            let html = `
+                <h3>給腦媽的一句話！</h3>
+                <p>喜歡《翻轉吧！小腦袋》嗎？一個人的力量有限，有您的支持才能走得更遠。</p>
+                <p>無論是五星鼓勵、功能許願，或是想聊聊商業合作，都歡迎在此留言給我！</p>
+                
+                <div class="feedback-stars">
+                    <span class="star-icon" onclick="rateStar(1)">★</span>
+                    <span class="star-icon" onclick="rateStar(2)">★</span>
+                    <span class="star-icon" onclick="rateStar(3)">★</span>
+                    <span class="star-icon" onclick="rateStar(4)">★</span>
+                    <span class="star-icon" onclick="rateStar(5)">★</span>
+                </div>
+                
+                <textarea id="feedback-text" class="feedback-textarea" placeholder="請輸入您的想法、建議或合作需求..."></textarea>
+                
+                <div class="feedback-divider"></div>
+                
+                <input type="text" id="feedback-name" class="feedback-input" placeholder="怎麼稱呼您？ (選填)">
+                <input type="email" id="feedback-email" class="feedback-input" placeholder="您的 Email (選填，若需要回覆請填寫)">
+                
+                <button class="btn-save" id="btn-submit-feedback" onclick="sendFeedbackAjax()">送出</button>
+            `;
+            
+            content.innerHTML = html;
+            document.getElementById('info-modal').style.display = 'flex';
+        }
+
+        function rateStar(n) {
+            feedbackRating = n;
+            const stars = document.querySelectorAll('.star-icon');
+            stars.forEach((star, index) => {
+                if (index < n) star.classList.add('active');
+                else star.classList.remove('active');
+            });
+        }
+
+        function sendFeedbackAjax() {
+            const text = document.getElementById('feedback-text').value;
+            const name = document.getElementById('feedback-name').value;
+            const email = document.getElementById('feedback-email').value;
+            
+            if (feedbackRating === 0 && !text) {
+                alert("請給予評分或輸入留言喔！");
+                return;
+            }
+            
+            const btn = document.getElementById('btn-submit-feedback');
+            btn.innerText = "傳送中...";
+            btn.disabled = true;
+            btn.style.opacity = "0.7";
+
+            // Using Formsubmit.co AJAX
+            fetch("https://formsubmit.co/ajax/mumstot.service@gmail.com", {
+                method: "POST",
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    rating: feedbackRating + " 顆星",
+                    message: text,
+                    name: name || "匿名",
+                    email: email || "未提供",
+                    _subject: "[翻轉吧！小腦袋] 新的回饋留言"
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                btn.innerText = "✅ 已送出！謝謝您";
+                btn.style.background = "#4CAF50";
+                setTimeout(() => {
+                    document.getElementById('info-modal').style.display = 'none';
+                }, 1500);
+            })
+            .catch(error => {
+                console.log(error);
+                alert("傳送失敗，請稍後再試，或直接聯繫我們。");
+                btn.innerText = "送出";
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            });
+        }
+        
+        init();
+    </script>
+</body>
+</html>
