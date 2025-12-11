@@ -39,7 +39,7 @@ Download the .html file from this repository.
 
 🤝 Credits
 
-- Plan & Supervise: Brainymama (Psychology & Brain Science Specialist | PhD in Child Psychology)
+- Plan & Supervise: Brainymama/ Dr. Wan-Ting Yeh (Psychology & Brain Science Experts | PhD in Child Psychology)
 - AI Collaboration: Code & Translation assistance by Google Gemini.
 
 📄 License & Usage
